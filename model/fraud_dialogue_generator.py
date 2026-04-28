@@ -8,7 +8,7 @@ import random
 from openai import OpenAI
 
 # --- CONFIG ---
-API_KEY = os.getenv("OPENAI_API_KEY")  # set your API key in environment variable
+API_KEY = os.getenv("API_KEY")  # set your API key in environment variable
 BASE_URL = "https://api.siliconflow.com/v1"  # swap to https://api.openai.com/v1 for OpenAI
 MODEL = "deepseek-ai/DeepSeek-V3"           # or gpt-4o, llama-3-70b, etc.
 LANGUAGE = "english"   # options: "english", "hindi", "hinglish"
