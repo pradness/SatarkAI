@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="satark_bg">#0A1220</color>
+    <color name="satark_bg_top">#14253C</color>
+    <color name="satark_surface">#152338</color>
+    <color name="satark_surface_alt">#1B2D46</color>
+    <color name="satark_surface_soft">#223653</color>
+    <color name="satark_stroke">#2E4667</color>
+    <color name="satark_primary">#78E7B5</color>
+    <color name="satark_primary_dark">#3DC28C</color>
+    <color name="satark_accent">#8DB8FF</color>
+    <color name="satark_warning">#FFD166</color>
+    <color name="satark_danger">#FF7F8A</color>
+    <color name="satark_text">#F6F8FC</color>
+    <color name="satark_text_secondary">#A9BCD5</color>
+    <color name="satark_text_muted">#7E93B2</color>
+    <color name="satark_log_bg">#09111C</color>
+    <color name="satark_log_text">#D8FFE8</color>
+</resources>

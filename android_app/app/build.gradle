@@ -4,15 +4,16 @@ plugins {
 }
 
 android {
-    namespace = "com.example.fraudcalldetector"
+    namespace = "com.example.satarkai"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.fraudcalldetector"
+        applicationId = "com.example.satarkai"
         minSdk = 29
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "AUDIO_UPLOAD_URL", "\"\"")
     }
 
     buildTypes {
@@ -32,6 +33,10 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 }
 

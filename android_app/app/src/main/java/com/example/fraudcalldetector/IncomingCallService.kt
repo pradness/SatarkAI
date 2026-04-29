@@ -1,4 +1,4 @@
-package com.example.fraudcalldetector
+package com.example.satarkai
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -20,8 +20,8 @@ class IncomingCallService : Service() {
         createChannel()
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_phone_call)
-            .setContentTitle("SIP service running")
-            .setContentText("Listening for incoming calls")
+            .setContentTitle("SatarkAI service running")
+            .setContentText("SatarkAI is listening for incoming calls")
             .setOngoing(true)
             .build()
         startForeground(NOTIFICATION_ID, notification)

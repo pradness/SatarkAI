@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FraudCallDetector</string>
+    <string name="app_name">SatarkAI</string>
+    <string name="register_title">Secure your SIP line</string>
+    <string name="register_subtitle">Register once, then place and monitor calls with live transcripts.</string>
+    <string name="sip_username_hint">SIP username</string>
+    <string name="sip_password_hint">SIP password</string>
+    <string name="register_action">Register</string>
+    <string name="open_dialer_action">Open dialer</string>
+    <string name="dialer_title">Smart dialer</string>
+    <string name="dialer_subtitle">Start a call and watch SatarkAI follow both sides of the conversation.</string>
+    <string name="sip_address_hint">Enter SIP address or extension</string>
+    <string name="call_action">Place call</string>
+    <string name="outgoing_transcript_title">You</string>
+    <string name="incoming_transcript_title">Caller</string>
+    <string name="debug_logs_title">Debug stream</string>
+    <string name="waiting_for_speech">(waiting for speech...)</string>
+    <string name="no_logs">No logs yet...</string>
+    <string name="call_status_live">Live analysis</string>
+    <string name="call_detection_title">SatarkAI detection</string>
+    <string name="call_score_default">Score: --</string>
 </resources>

@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SatarkAIApp"
+rootProject.name = "SatarkAI"
 include(":app")

@@ -1,4 +1,4 @@
-package com.example.fraudcalldetector
+package com.example.satarkai
 
 import android.Manifest
 import android.content.Intent

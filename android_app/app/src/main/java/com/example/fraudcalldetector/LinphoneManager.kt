@@ -1,7 +1,8 @@
-package com.example.fraudcalldetector
+package com.example.satarkai
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -10,13 +11,16 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import org.linphone.core.Account
-import org.linphone.core.AccountParams
-import org.linphone.core.AuthInfo
 import org.linphone.core.Call
+import org.linphone.core.CallParams
 import org.linphone.core.Core
 import org.linphone.core.CoreListenerStub
 import org.linphone.core.Factory
+import org.linphone.core.MediaEncryption
 import org.linphone.core.RegistrationState
+import org.linphone.core.Address
+import java.io.File
+import java.util.concurrent.CopyOnWriteArraySet
 
 object LinphoneManager {
     private const val SIP_DOMAIN = "sip.linphone.org"
@@ -36,8 +40,11 @@ object LinphoneManager {
 
     var onRegistrationStateChanged: ((status: String, registered: Boolean) -> Unit)? = null
     var onCallStateChanged: ((Call?, Call.State) -> Unit)? = null
-    private val registrationListeners = mutableSetOf<(String, Boolean) -> Unit>()
-    private val callListeners = mutableSetOf<(Call?, Call.State) -> Unit>()
+
+    // CopyOnWriteArraySet: safe for concurrent iteration + modification from different threads
+    // (Linphone callbacks arrive on its own internal thread; UI adds/removes listeners on main).
+    private val registrationListeners = CopyOnWriteArraySet<(String, Boolean) -> Unit>()
+    private val callListeners = CopyOnWriteArraySet<(Call?, Call.State) -> Unit>()
 
     var lastRegistrationStatus: String = "Unregistered"
         private set
@@ -46,7 +53,6 @@ object LinphoneManager {
 
     private val iterateRunnable = object : Runnable {
         override fun run() {
-            if (!::core.isInitialized) return
             core.iterate()
             mainHandler.postDelayed(this, ITERATE_DELAY_MS)
         }
@@ -60,33 +66,44 @@ object LinphoneManager {
             message: String
         ) {
             val (text, registered) = when (state) {
-                RegistrationState.Ok -> "Registered" to true
+                RegistrationState.Ok       -> "Registered" to true
                 RegistrationState.Progress -> "Registering..." to false
-                RegistrationState.Failed -> "Failed" to false
-                RegistrationState.Cleared -> "Unregistered" to false
-                else -> state.name to false
+                RegistrationState.Failed   -> "Failed: ${message.ifBlank { "check SIP username/password" }}" to false
+                RegistrationState.Cleared  -> "Unregistered" to false
+                else                       -> state.name to false
             }
             lastRegistrationStatus = text
             isRegistered = registered
             onRegistrationStateChanged?.invoke(text, registered)
             registrationListeners.forEach { it.invoke(text, registered) }
-            if (state == RegistrationState.Failed || state == RegistrationState.Cleared) {
-                attemptAutoReregister()
-            }
+
+            // Do NOT auto re-register on Cleared — that state means we (or the server)
+            // intentionally removed the registration. Re-registering here causes an
+            // unregister → Cleared → re-register loop that makes logout impossible.
         }
 
         override fun onCallStateChanged(core: Core, call: Call, state: Call.State, message: String) {
+            val remote = call.remoteAddress?.asStringUriOnly().orEmpty()
+            UiDebugLogger.log(
+                buildString {
+                    append("Call state: ")
+                    append(state.name)
+                    if (remote.isNotBlank()) append(" for $remote")
+                    if (message.isNotBlank()) append(" ($message)")
+                }
+            )
             onCallStateChanged?.invoke(call, state)
             callListeners.forEach { it.invoke(call, state) }
             when (state) {
                 Call.State.IncomingReceived -> {
-                    // Accept immediately so media setup does not depend on activity launch timing.
-                    runOnMain { call.accept() }
-                    launchInCallActivity(call.remoteAddress.asStringUriOnly())
-                    showIncomingCallNotification(call.remoteAddress.asStringUriOnly())
+                    val remote = call.remoteAddress.asStringUriOnly()
+                    launchInCallActivity(remote)
+                    showIncomingCallNotification(remote)
                 }
                 Call.State.StreamsRunning -> {
-                    AudioCaptureManager.startCapture(appContext)
+                    // Recording is already armed before the call was placed/accepted.
+                    // startCapture reads the record file path from call.currentParams.
+                    AudioCaptureManager.startCapture(appContext, call)
                 }
                 Call.State.End,
                 Call.State.Released,
@@ -103,6 +120,20 @@ object LinphoneManager {
         if (initialized) return
         appContext = context.applicationContext
         core = Factory.instance().createCore(null, null, appContext)
+
+        // Arm recording awareness globally before core.start() so it is active for
+        // every call from the first one — not just after the first acceptCall/invite.
+        core.setRecordAwareEnabled(true)
+        if (core.mediaEncryptionSupported(MediaEncryption.SRTP)) {
+            core.setMediaEncryption(MediaEncryption.SRTP)
+            core.setMediaEncryptionMandatory(false)
+            UiDebugLogger.log("Linphone media encryption configured: SRTP preferred")
+        } else {
+            core.setMediaEncryption(MediaEncryption.None)
+            core.setMediaEncryptionMandatory(false)
+            UiDebugLogger.log("Linphone media encryption configured: None")
+        }
+
         core.addListener(coreListener)
         core.start()
         mainHandler.post(iterateRunnable)
@@ -114,14 +145,29 @@ object LinphoneManager {
 
     fun register(username: String, password: String) {
         runOnMain {
-            val identity = Factory.instance().createAddress("sip:$username@$SIP_DOMAIN") ?: run {
+            // Do not tear down accounts while a call is active.
+            if (core.currentCall != null) {
+                UiDebugLogger.log("Registration skipped: call in progress")
+                onRegistrationStateChanged?.invoke("Registration skipped: call in progress", false)
+                return@runOnMain
+            }
+
+            val normalizedUsername = normalizeUsername(username)
+            if (normalizedUsername.isBlank()) {
                 onRegistrationStateChanged?.invoke("Invalid Username", false)
                 return@runOnMain
             }
-            val server = Factory.instance().createAddress("sip:$SIP_DOMAIN") ?: return@runOnMain
+            val identity = Factory.instance().createAddress("sip:$normalizedUsername@$SIP_DOMAIN") ?: run {
+                onRegistrationStateChanged?.invoke("Invalid Username", false)
+                return@runOnMain
+            }
+            val server = Factory.instance().createAddress("sip:$SIP_DOMAIN;transport=tls") ?: run {
+                onRegistrationStateChanged?.invoke("Invalid SIP Server", false)
+                return@runOnMain
+            }
 
-            val authInfo: AuthInfo = Factory.instance().createAuthInfo(
-                username,
+            val authInfo = Factory.instance().createAuthInfo(
+                normalizedUsername,
                 null,
                 password,
                 null,
@@ -130,19 +176,19 @@ object LinphoneManager {
                 null
             )
 
-            val params: AccountParams = core.createAccountParams().apply {
+            val params = core.createAccountParams().apply {
                 identityAddress = identity
                 serverAddress = server
                 isRegisterEnabled = true
             }
 
-            val account: Account = core.createAccount(params)
+            val account = core.createAccount(params)
             core.clearAccounts()
             core.clearAllAuthInfo()
             core.addAuthInfo(authInfo)
             core.addAccount(account)
             core.defaultAccount = account
-            saveCredentials(username, password)
+            saveCredentials(normalizedUsername, password)
 
             lastRegistrationStatus = "Registering..."
             isRegistered = false
@@ -151,47 +197,83 @@ object LinphoneManager {
         }
     }
 
-    fun startOutgoingCall(rawNumber: String): Call? {
-        val dialTarget = if (rawNumber.contains("@")) rawNumber else "sip:$rawNumber@$SIP_DOMAIN"
-        var createdCall: Call? = null
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            createdCall = core.invite(dialTarget)
-        } else {
-            // Synchronous wait on main if needed, but for simplicity:
-            mainHandler.post { core.invite(dialTarget) }
+    private fun normalizeUsername(rawInput: String): String {
+        return rawInput.trim()
+            .removePrefix("sip:")
+            .removePrefix("SIP:")
+            .substringBefore("@")
+            .trim()
+    }
+
+    /**
+     * Starts an outgoing call. Always posts to main thread for Linphone thread-safety.
+     * Returns null — the call object is created asynchronously; callers should use
+     * [addCallStateListener] to observe [Call.State.OutgoingInit] for the created call.
+     */
+    fun startOutgoingCall(rawNumber: String) {
+        runOnMain {
+            val dialAddress = buildDialAddress(rawNumber)
+            if (dialAddress == null) {
+                UiDebugLogger.log("Outgoing call aborted: invalid SIP target '$rawNumber'")
+                return@runOnMain
+            }
+            startOutgoingCallWithRecording(dialAddress)
         }
-        return createdCall
     }
 
     fun acceptCall(call: Call) {
         runOnMain {
-            call.accept()
+            acceptCallInternal(call)
         }
     }
 
-    fun toggleMute(call: Call, enabled: Boolean) {
-        runOnMain {
-            call.microphoneMuted = enabled
+    fun acceptPendingIncomingCall(): Boolean {
+        val pendingCall = resolveIncomingCall()
+        if (pendingCall == null) {
+            UiDebugLogger.log(
+                "Accept requested but no pending incoming call was found (incomingInvitePending=${core.isIncomingInvitePending}, calls=${core.callsNb})"
+            )
+            return false
         }
+        runOnMain {
+            UiDebugLogger.log(
+                "Accept requested for ${pendingCall.remoteAddress?.asStringUriOnly().orEmpty()} (state=${pendingCall.state.name})"
+            )
+            acceptCallInternal(pendingCall)
+        }
+        return true
+    }
+
+    fun rejectCall(call: Call?) {
+        runOnMain { call?.terminate() }
+    }
+
+    fun toggleMute(call: Call, enabled: Boolean) {
+        runOnMain { call.microphoneMuted = enabled }
     }
 
     fun toggleSpeaker(enabled: Boolean) {
         runOnMain {
-            // In Linphone SDK 5.2+, use audioDevice to switch to speaker
-            val speaker = core.audioDevices.find { it.type == org.linphone.core.AudioDevice.Type.Speaker }
-            val earpiece = core.audioDevices.find { it.type == org.linphone.core.AudioDevice.Type.Earpiece }
-            
-            val deviceToUse = if (enabled) speaker else earpiece
-            deviceToUse?.let {
-                core.currentCall?.outputAudioDevice = it
+            val currentCall = core.currentCall ?: run {
+                UiDebugLogger.log("toggleSpeaker: no active call")
+                return@runOnMain
+            }
+            val targetType = if (enabled) {
+                org.linphone.core.AudioDevice.Type.Speaker
+            } else {
+                org.linphone.core.AudioDevice.Type.Earpiece
+            }
+            val device = core.audioDevices.find { it.type == targetType }
+            if (device != null) {
+                currentCall.outputAudioDevice = device
+            } else {
+                UiDebugLogger.log("toggleSpeaker: audio device not found (type=$targetType)")
             }
         }
     }
 
     fun hangUp(call: Call?) {
-        runOnMain {
-            call?.terminate()
-        }
+        runOnMain { call?.terminate() }
     }
 
     fun getCurrentCall(): Call? = core.currentCall
@@ -258,21 +340,134 @@ object LinphoneManager {
     }
 
     private fun showIncomingCallNotification(remoteAddress: String) {
+        val inCallIntent = Intent(appContext, InCallActivity::class.java).apply {
+            putExtra(InCallActivity.EXTRA_REMOTE_ADDRESS, remoteAddress)
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+            )
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            appContext,
+            1001,
+            inCallIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(appContext, CALL_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.sym_call_incoming)
             .setContentTitle("Incoming SIP Call")
             .setContentText(remoteAddress)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setContentIntent(pendingIntent)
+            .setFullScreenIntent(pendingIntent, true)
+            .setOngoing(true)
             .setAutoCancel(true)
             .build()
+
         NotificationManagerCompat.from(appContext).notify(CALL_NOTIFICATION_ID, notification)
     }
 
     private fun runOnMain(action: () -> Unit) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            action()
+        if (Looper.myLooper() == Looper.getMainLooper()) action()
+        else mainHandler.post { action() }
+    }
+
+    private fun startOutgoingCallWithRecording(dialAddress: Address) {
+        val recordFile = createCallRecordingFile().absolutePath
+        core.recordFile = recordFile
+        val params = core.createCallParams(null)
+        val selectedEncryption = configureCallParams(params, recordFile)
+        UiDebugLogger.log(
+            "Starting outgoing call to ${dialAddress.asStringUriOnly()} with recording file: $recordFile"
+        )
+        UiDebugLogger.log(
+            "Outgoing media profile: encryption=${selectedEncryption.name}, video=false, earlyMedia=false"
+        )
+        if (params != null) {
+            core.inviteAddressWithParams(dialAddress, params)
         } else {
-            mainHandler.post { action() }
+            core.inviteAddress(dialAddress)
         }
+    }
+
+    private fun acceptCallInternal(call: Call) {
+        val recordFile = createCallRecordingFile().absolutePath
+        core.recordFile = recordFile
+        val params = core.createCallParams(call)
+        val selectedEncryption = configureCallParams(params, recordFile)
+        UiDebugLogger.log(
+            "Accepting incoming call from ${call.remoteAddress?.asStringUriOnly().orEmpty()} with recording file: $recordFile"
+        )
+        UiDebugLogger.log(
+            "Incoming media profile: encryption=${selectedEncryption.name}, video=false, earlyMedia=false"
+        )
+        if (params != null) {
+            call.acceptWithParams(params)
+        } else {
+            call.accept()
+        }
+    }
+
+    private fun resolveIncomingCall(): Call? {
+        val currentCall = core.currentCall
+        if (currentCall != null && currentCall.state == Call.State.IncomingReceived) {
+            return currentCall
+        }
+        return core.calls.firstOrNull { candidate ->
+            candidate.state == Call.State.IncomingReceived
+        }
+    }
+
+    private fun configureCallParams(params: CallParams?, recordFile: String): MediaEncryption {
+        val selectedEncryption = when {
+            core.mediaEncryptionSupported(MediaEncryption.SRTP) -> MediaEncryption.SRTP
+            else -> MediaEncryption.None
+        }
+        params?.recordFile = recordFile
+        params?.account = core.defaultAccount
+        params?.setAudioEnabled(true)
+        params?.setVideoEnabled(false)
+        params?.setEarlyMediaSendingEnabled(false)
+        params?.setMediaEncryption(selectedEncryption)
+        return selectedEncryption
+    }
+
+    private fun buildDialAddress(rawTarget: String): Address? {
+        val trimmedTarget = rawTarget.trim()
+        if (trimmedTarget.isBlank()) return null
+
+        val normalizedTarget = when {
+            trimmedTarget.startsWith("sip:", ignoreCase = true) ||
+                trimmedTarget.startsWith("sips:", ignoreCase = true) -> trimmedTarget
+            trimmedTarget.contains("@") -> "sip:$trimmedTarget"
+            else -> "sip:${normalizeUsername(trimmedTarget)}@$SIP_DOMAIN"
+        }
+
+        val address = core.interpretUrl(normalizedTarget) ?: Factory.instance().createAddress(normalizedTarget)
+        if (address == null) {
+            UiDebugLogger.log("Unable to parse SIP target: $normalizedTarget")
+            return null
+        }
+
+        if (address.username.isNullOrBlank()) {
+            UiDebugLogger.log("Outgoing call target has no username: $normalizedTarget")
+            return null
+        }
+
+        if (address.domain.isNullOrBlank()) {
+            address.domain = SIP_DOMAIN
+        }
+
+        address.clean()
+        return address
+    }
+
+    private fun createCallRecordingFile(): File {
+        val dir = File(appContext.getExternalFilesDir(null), "VoiceCallTest")
+        if (!dir.exists()) dir.mkdirs()
+        return File(dir, "call_${System.currentTimeMillis()}.wav")
     }
 }
