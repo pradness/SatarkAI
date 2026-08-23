@@ -157,10 +157,21 @@ object WhisperTranscriptionManager {
                 val best = selectBestCandidate(candidates)
                 if (best != null && shouldEmit(best, channel)) {
                     val tagged = "[${best.languageKey}] ${best.text}"
+
                     listeners.forEach { it.invoke(channel, tagged) }
+
                     UiDebugLogger.log(
                         "${channel.name} transcript (${best.languageKey}, conf=${"%.2f".format(best.confidence)}): ${best.text}"
                     )
+
+                    // SEND TRANSCRIPT TO PYTHON BACKEND
+                    AudioTransferManager.sendTranscript(
+                        text = best.text,
+                        channel = channel.name,
+                        language = best.languageKey,
+                        confidence = best.confidence
+                    )
+
                     lastEmittedTextByChannel[channel] = normalizeText(best.text)
                 }
             } catch (t: Throwable) {

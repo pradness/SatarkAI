@@ -155,12 +155,9 @@ object AudioCaptureManager {
                             SAMPLE_RATE,
                             TranscriptChannel.OUTGOING
                         )
-                        AudioTransferManager.enqueueChunk(outgoingChunk, SAMPLE_RATE)
                     }
 
                     // --- Dispatch incoming chunk ---
-                    // Always use CHUNK_SIZE_BYTES as threshold; incoming PCM is resampled to
-                    // SAMPLE_RATE (16kHz) before being handed to Vosk, so 1 second = CHUNK_SIZE_BYTES.
                     if (incomingChunkBuffer.size >= CHUNK_SIZE_BYTES) {
                         val rawChunk = ByteArray(incomingChunkBuffer.size) { incomingChunkBuffer[it] }
                         incomingChunkBuffer.clear()
@@ -172,18 +169,17 @@ object AudioCaptureManager {
                             rawChunk
                         }
 
-                        WhisperTranscriptionManager.transcribePcmChunk(
-                            chunkFor16k,
-                            SAMPLE_RATE,
-                            TranscriptChannel.INCOMING
-                        )
+                        // SEND DIRECTLY TO BACKEND
+                        //AudioTransferManager.sendAudioChunk(chunkFor16k, SAMPLE_RATE)
                     }
 
-                    if (outgoingChunkBuffer.isEmpty() && incomingChunkBuffer.isEmpty()) {
-                        chunkDispatchCounter += 1
-                        if (chunkDispatchCounter % 10 == 0) {
-                            UiDebugLogger.log("Audio chunks dispatched: $chunkDispatchCounter")
-                        }
+                    // --- Dispatch outgoing chunk ---
+                    if (outgoingChunkBuffer.size >= CHUNK_SIZE_BYTES) {
+                        val outgoingChunk = ByteArray(outgoingChunkBuffer.size) { outgoingChunkBuffer[it] }
+                        outgoingChunkBuffer.clear()
+                        
+                        // SEND DIRECTLY TO BACKEND
+                        //AudioTransferManager.sendAudioChunk(outgoingChunk, SAMPLE_RATE)
                     }
                 }
             } catch (t: Exception) {
@@ -197,7 +193,6 @@ object AudioCaptureManager {
                         SAMPLE_RATE,
                         TranscriptChannel.OUTGOING
                     )
-                    AudioTransferManager.enqueueChunk(remainingChunk, SAMPLE_RATE)
                 }
 
                 // Flush remaining incoming — resample before sending to Vosk
@@ -233,12 +228,10 @@ object AudioCaptureManager {
         captureJob?.cancel()
         captureJob = null
         UiDebugLogger.log("Audio capture stop requested")
-        AudioTransferManager.flush()
     }
 
     fun shutdown() {
         stopCapture()
-        AudioTransferManager.shutdown()
         scope.cancel()
     }
 

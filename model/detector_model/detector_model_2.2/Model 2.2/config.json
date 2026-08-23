@@ -11,9 +11,14 @@
   "eos_token_id": null,
   "hidden_dim": 3072,
   "id2label": {
-    "0": "LABEL_0",
-    "1": "LABEL_1",
-    "2": "LABEL_2"
+    "0": "SAFE",
+    "1": "SUSPICIOUS",
+    "2": "SCAM"
+  },
+  "label2id": {
+    "SAFE": 0,
+    "SUSPICIOUS": 1,
+    "SCAM": 2
   },
   "initializer_range": 0.02,
   "label2id": {

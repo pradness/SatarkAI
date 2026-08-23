@@ -13,8 +13,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        buildConfigField("String", "AUDIO_UPLOAD_URL", "\"\"")
-    }
+        buildConfigField("String", "AUDIO_UPLOAD_URL", "\"http://192.168.29.91:8000/predict\"")    }
 
     buildTypes {
         release {

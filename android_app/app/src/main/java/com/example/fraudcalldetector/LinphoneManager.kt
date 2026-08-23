@@ -394,16 +394,23 @@ object LinphoneManager {
     }
 
     private fun acceptCallInternal(call: Call) {
-        val recordFile = createCallRecordingFile().absolutePath
-        core.recordFile = recordFile
+        UiDebugLogger.log(
+            "Accepting incoming call from ${call.remoteAddress?.asStringUriOnly().orEmpty()}"
+        )
         val params = core.createCallParams(call)
-        val selectedEncryption = configureCallParams(params, recordFile)
-        UiDebugLogger.log(
-            "Accepting incoming call from ${call.remoteAddress?.asStringUriOnly().orEmpty()} with recording file: $recordFile"
-        )
-        UiDebugLogger.log(
-            "Incoming media profile: encryption=${selectedEncryption.name}, video=false, earlyMedia=false"
-        )
+        val selectedEncryption = when {
+            core.mediaEncryptionSupported(MediaEncryption.SRTP) -> MediaEncryption.SRTP
+            else -> MediaEncryption.None
+        }
+        
+        params?.let {
+            it.account = core.defaultAccount
+            it.setAudioEnabled(true)
+            it.setVideoEnabled(false)
+            it.setEarlyMediaSendingEnabled(false)
+            it.setMediaEncryption(selectedEncryption)
+        }
+
         if (params != null) {
             call.acceptWithParams(params)
         } else {
@@ -426,7 +433,6 @@ object LinphoneManager {
             core.mediaEncryptionSupported(MediaEncryption.SRTP) -> MediaEncryption.SRTP
             else -> MediaEncryption.None
         }
-        params?.recordFile = recordFile
         params?.account = core.defaultAccount
         params?.setAudioEnabled(true)
         params?.setVideoEnabled(false)
