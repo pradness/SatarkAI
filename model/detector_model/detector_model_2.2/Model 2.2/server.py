@@ -1,7 +1,7 @@
 import logging
 import sys
 from contextlib import asynccontextmanager
-
+import os
 import torch
 import unicodedata
 
@@ -46,7 +46,7 @@ app = FastAPI(title="SatarkAI IndicBERT Vishing Detector", lifespan=lifespan)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # CHANGE THIS to your actual model folder
-MODEL_PATH = r"C:\Users\SUYOG\Downloads\satarkNew\SatarkAI\indica_vishing_model"
+MODEL_PATH = os.getenv("MODEL_PATH", "suyog17/indica-vishing-model")
 
 print(f"Loading model from: {MODEL_PATH}")
 

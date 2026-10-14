@@ -27,6 +27,7 @@ render.experimental.xml
 *.jks
 *.keystore
 google-services.json
+
 .env
 .env.*
 !.env.example
@@ -54,3 +55,7 @@ indica_vishing_model/checkpoint-*/
 *.pt
 *.pth
 *.ckpt
+
+*.safetensors 
+
+indica_vishing_model/ 
