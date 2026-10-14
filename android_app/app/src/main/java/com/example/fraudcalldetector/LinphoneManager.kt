@@ -41,8 +41,6 @@ object LinphoneManager {
     var onRegistrationStateChanged: ((status: String, registered: Boolean) -> Unit)? = null
     var onCallStateChanged: ((Call?, Call.State) -> Unit)? = null
 
-    // CopyOnWriteArraySet: safe for concurrent iteration + modification from different threads
-    // (Linphone callbacks arrive on its own internal thread; UI adds/removes listeners on main).
     private val registrationListeners = CopyOnWriteArraySet<(String, Boolean) -> Unit>()
     private val callListeners = CopyOnWriteArraySet<(Call?, Call.State) -> Unit>()
 
@@ -76,10 +74,6 @@ object LinphoneManager {
             isRegistered = registered
             onRegistrationStateChanged?.invoke(text, registered)
             registrationListeners.forEach { it.invoke(text, registered) }
-
-            // Do NOT auto re-register on Cleared — that state means we (or the server)
-            // intentionally removed the registration. Re-registering here causes an
-            // unregister → Cleared → re-register loop that makes logout impossible.
         }
 
         override fun onCallStateChanged(core: Core, call: Call, state: Call.State, message: String) {
@@ -96,18 +90,29 @@ object LinphoneManager {
             callListeners.forEach { it.invoke(call, state) }
             when (state) {
                 Call.State.IncomingReceived -> {
-                    val remote = call.remoteAddress.asStringUriOnly()
-                    launchInCallActivity(remote)
-                    showIncomingCallNotification(remote)
+                    val remoteAddress = call.remoteAddress.asStringUriOnly()
+                    launchInCallActivity(remoteAddress)
+                    showIncomingCallNotification(remoteAddress)
                 }
                 Call.State.StreamsRunning -> {
-                    // Recording is already armed before the call was placed/accepted.
-                    // startCapture reads the record file path from call.currentParams.
-                    AudioCaptureManager.startCapture(appContext, call)
+                    try {
+                        call.startRecording()
+                        UiDebugLogger.log("Linphone call recording started: ${call.params.recordFile}")
+                    } catch (e: Exception) {
+                        UiDebugLogger.log("Failed to start Linphone call recording: ${e.message}")
+                    }
+                    try { AudioCaptureManager.startCapture(appContext, call) }
+                    catch (e: Throwable) { UiDebugLogger.log("startCapture failed: ${e.javaClass.simpleName}: ${e.message}") }
                 }
                 Call.State.End,
                 Call.State.Released,
                 Call.State.Error -> {
+                    try {
+                        call.stopRecording()
+                        UiDebugLogger.log("Linphone call recording stopped")
+                    } catch (e: Exception) {
+                        // Ignored if recording was not active
+                    }
                     AudioCaptureManager.stopCapture()
                     NotificationManagerCompat.from(appContext).cancel(CALL_NOTIFICATION_ID)
                 }
@@ -121,8 +126,6 @@ object LinphoneManager {
         appContext = context.applicationContext
         core = Factory.instance().createCore(null, null, appContext)
 
-        // Arm recording awareness globally before core.start() so it is active for
-        // every call from the first one — not just after the first acceptCall/invite.
         core.setRecordAwareEnabled(true)
         if (core.mediaEncryptionSupported(MediaEncryption.SRTP)) {
             core.setMediaEncryption(MediaEncryption.SRTP)
@@ -145,7 +148,6 @@ object LinphoneManager {
 
     fun register(username: String, password: String) {
         runOnMain {
-            // Do not tear down accounts while a call is active.
             if (core.currentCall != null) {
                 UiDebugLogger.log("Registration skipped: call in progress")
                 onRegistrationStateChanged?.invoke("Registration skipped: call in progress", false)
@@ -205,11 +207,6 @@ object LinphoneManager {
             .trim()
     }
 
-    /**
-     * Starts an outgoing call. Always posts to main thread for Linphone thread-safety.
-     * Returns null — the call object is created asynchronously; callers should use
-     * [addCallStateListener] to observe [Call.State.OutgoingInit] for the created call.
-     */
     fun startOutgoingCall(rawNumber: String) {
         runOnMain {
             val dialAddress = buildDialAddress(rawNumber)
@@ -377,7 +374,6 @@ object LinphoneManager {
 
     private fun startOutgoingCallWithRecording(dialAddress: Address) {
         val recordFile = createCallRecordingFile().absolutePath
-        core.recordFile = recordFile
         val params = core.createCallParams(null)
         val selectedEncryption = configureCallParams(params, recordFile)
         UiDebugLogger.log(
@@ -386,16 +382,22 @@ object LinphoneManager {
         UiDebugLogger.log(
             "Outgoing media profile: encryption=${selectedEncryption.name}, video=false, earlyMedia=false"
         )
-        if (params != null) {
-            core.inviteAddressWithParams(dialAddress, params)
-        } else {
+        try {
+            if (params != null) {
+                core.inviteAddressWithParams(dialAddress, params)
+            } else {
+                core.inviteAddress(dialAddress)
+            }
+        } catch (e: Exception) {
+            UiDebugLogger.log("Error inviting address with params: ${e.message}, falling back to basic invite")
             core.inviteAddress(dialAddress)
         }
     }
 
     private fun acceptCallInternal(call: Call) {
+        val recordFile = createCallRecordingFile().absolutePath
         UiDebugLogger.log(
-            "Accepting incoming call from ${call.remoteAddress?.asStringUriOnly().orEmpty()}"
+            "Accepting incoming call from ${call.remoteAddress?.asStringUriOnly().orEmpty()} with recordFile: $recordFile"
         )
         val params = core.createCallParams(call)
         val selectedEncryption = when {
@@ -404,17 +406,31 @@ object LinphoneManager {
         }
         
         params?.let {
-            it.account = core.defaultAccount
-            it.setAudioEnabled(true)
-            it.setVideoEnabled(false)
-            it.setEarlyMediaSendingEnabled(false)
-            it.setMediaEncryption(selectedEncryption)
+            try {
+                it.account = core.defaultAccount
+                it.setAudioEnabled(true)
+                it.setVideoEnabled(false)
+                it.setEarlyMediaSendingEnabled(false)
+                it.setMediaEncryption(selectedEncryption)
+                it.recordFile = recordFile
+            } catch (e: Exception) {
+                UiDebugLogger.log("Notice: Error setting call params: ${e.message}")
+            }
         }
 
-        if (params != null) {
-            call.acceptWithParams(params)
-        } else {
-            call.accept()
+        try {
+            if (params != null) {
+                call.acceptWithParams(params)
+            } else {
+                call.accept()
+            }
+        } catch (e: Exception) {
+            UiDebugLogger.log("Error accepting call with params: ${e.message}, falling back to basic accept")
+            try {
+                call.accept()
+            } catch (fallbackErr: Exception) {
+                UiDebugLogger.log("Fallback accept failed: ${fallbackErr.message}")
+            }
         }
     }
 
@@ -433,6 +449,7 @@ object LinphoneManager {
             core.mediaEncryptionSupported(MediaEncryption.SRTP) -> MediaEncryption.SRTP
             else -> MediaEncryption.None
         }
+        params?.recordFile = recordFile
         params?.account = core.defaultAccount
         params?.setAudioEnabled(true)
         params?.setVideoEnabled(false)

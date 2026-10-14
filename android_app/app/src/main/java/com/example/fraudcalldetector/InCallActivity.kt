@@ -50,7 +50,7 @@ class InCallActivity : AppCompatActivity() {
 
                 when (channel) {
 
-                    TranscriptChannel.OUTGOING -> {
+                    TranscriptChannel.LOCAL -> {
                         appendTranscript(
                             outgoingTranscriptLabel,
                             outgoingTranscriptContainer,
@@ -58,7 +58,7 @@ class InCallActivity : AppCompatActivity() {
                         )
                     }
 
-                    TranscriptChannel.INCOMING -> {
+                    TranscriptChannel.REMOTE -> {
 
                         appendTranscript(
                             incomingTranscriptLabel,

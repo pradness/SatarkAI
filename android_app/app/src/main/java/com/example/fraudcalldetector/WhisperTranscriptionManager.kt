@@ -15,8 +15,8 @@ import org.vosk.Model
 import org.vosk.Recognizer
 
 enum class TranscriptChannel {
-    OUTGOING,
-    INCOMING
+    LOCAL,
+    REMOTE
 }
 
 object WhisperTranscriptionManager {
@@ -131,13 +131,16 @@ object WhisperTranscriptionManager {
         ensureModelLoadedAsync("transcribe")
         scope.launch {
             try {
+                val channelTag = channel.name // LOCAL or REMOTE
+                Log.d(TAG, "[VOSK][$channelTag] audio received=${pcmBytes.size} bytes, sampleRate=$sampleRate")
+
                 val recognizerMap = getRecognizer(channel, sampleRate)
                 if (recognizerMap.isEmpty()) {
                     val key = channel.name
                     val current = (droppedChunkLogCounter[key] ?: 0) + 1
                     droppedChunkLogCounter[key] = current
                     if (current % 10 == 0) {
-                        UiDebugLogger.log("Skipped $current chunks: recognizer unavailable")
+                        UiDebugLogger.log("Skipped $current chunks [$channelTag]: recognizer unavailable")
                     }
                     return@launch
                 }
@@ -156,12 +159,19 @@ object WhisperTranscriptionManager {
 
                 val best = selectBestCandidate(candidates)
                 if (best != null && shouldEmit(best, channel)) {
-                    val tagged = "[${best.languageKey}] ${best.text}"
+                    val displayText = if (best.languageKey == "hi") {
+                        transliterateToRoman(best.text)
+                    } else {
+                        best.text
+                    }
+
+                    val tagged = "[${best.languageKey}] $displayText"
 
                     listeners.forEach { it.invoke(channel, tagged) }
 
+                    Log.d(TAG, "[VOSK][$channelTag] recognition result (${best.languageKey}, conf=${"%.2f".format(best.confidence)}): ${best.text}")
                     UiDebugLogger.log(
-                        "${channel.name} transcript (${best.languageKey}, conf=${"%.2f".format(best.confidence)}): ${best.text}"
+                        "$channelTag transcript (${best.languageKey}, conf=${"%.2f".format(best.confidence)}): ${best.text}"
                     )
 
                     // SEND TRANSCRIPT TO PYTHON BACKEND
@@ -307,6 +317,28 @@ object WhisperTranscriptionManager {
 
     private fun normalizeText(text: String): String =
         text.lowercase(Locale.ROOT).replace("\\s+".toRegex(), " ").trim()
+
+    /**
+     * Maps Devanagari characters to Roman script approximations.
+     */
+    private fun transliterateToRoman(input: String): String {
+        val map = mapOf(
+            'अ' to "a", 'आ' to "aa", 'इ' to "i", 'ई' to "ee", 'उ' to "u", 'ऊ' to "oo",
+            'ए' to "e", 'ऐ' to "ai", 'ओ' to "o", 'औ' to "au", 'क' to "k", 'ख' to "kh",
+            'ग' to "g", 'घ' to "gh", 'च' to "ch", 'छ' to "chh", 'ज' to "j", 'झ' to "jh",
+            'ट' to "t", 'ठ' to "th", 'ड' to "d", 'ढ' to "dh", 'ण' to "n", 'त' to "t",
+            'थ' to "th", 'द' to "d", 'ध' to "dh", 'न' to "n", 'प' to "p", 'फ' to "ph",
+            'ब' to "b", 'भ' to "bh", 'म' to "m", 'य' to "y", 'र' to "r", 'ल' to "l",
+            'व' to "v", 'श' to "sh", 'ष' to "sh", 'स' to "s", 'ह' to "h", 'ा' to "aa",
+            'ि' to "i", 'ी' to "ee", 'ु' to "u", 'ू' to "oo", 'े' to "e", 'ै' to "ai",
+            'ो' to "o", 'ौ' to "au", 'ं' to "n", '्' to ""
+        )
+        val sb = StringBuilder()
+        for (ch in input) {
+            sb.append(map[ch] ?: ch)
+        }
+        return sb.toString()
+    }
 
     private data class ScoredTranscript(
         val languageKey: String,

@@ -141,8 +141,8 @@ object AudioTransferManager {
 
                 requestMethod = "POST"
 
-                connectTimeout = 10_000
-                readTimeout = 10_000
+                connectTimeout = 2_000
+                readTimeout = 2_000
 
                 doOutput = true
 
