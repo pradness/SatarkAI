@@ -8,6 +8,11 @@ enum class CallSecurityStatus {
     UNVERIFIED
 }
 
+enum class TranscriptChannel {
+    LOCAL,
+    REMOTE
+}
+
 data class ContactItem(
     val id: String,
     val name: String,

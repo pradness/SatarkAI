@@ -15,6 +15,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -72,6 +73,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonRegister: Button
     private lateinit var textRegistrationStatus: TextView
 
+    // Header Server Status
+    private lateinit var textHeaderServerStatus: TextView
+
+    // Backend Server Settings
+    private lateinit var editServerUrl: EditText
+    private lateinit var textServerStatusBadge: TextView
+    private lateinit var textServerDiagnostics: TextView
+    private lateinit var btnPresetEmulator: Button
+    private lateinit var btnPresetDefault: Button
+    private lateinit var btnTestServerConnection: Button
+    private lateinit var btnSaveServerUrl: Button
+
     private val registrationListener: (String, Boolean) -> Unit = { status, isRegistered ->
         runOnUiThread {
             updateRegistrationUi(status, isRegistered)
@@ -114,6 +127,18 @@ class MainActivity : AppCompatActivity() {
         iconTabAccount = findViewById(R.id.iconTabAccount)
 
         textHeaderSipStatus = findViewById(R.id.textHeaderSipStatus)
+        textHeaderServerStatus = findViewById(R.id.textHeaderServerStatus)
+        textHeaderServerStatus.setOnClickListener {
+            switchTab(3)
+        }
+
+        editServerUrl = findViewById(R.id.editServerUrl)
+        textServerStatusBadge = findViewById(R.id.textServerStatusBadge)
+        textServerDiagnostics = findViewById(R.id.textServerDiagnostics)
+        btnPresetEmulator = findViewById(R.id.btnPresetEmulator)
+        btnPresetDefault = findViewById(R.id.btnPresetDefault)
+        btnTestServerConnection = findViewById(R.id.btnTestServerConnection)
+        btnSaveServerUrl = findViewById(R.id.btnSaveServerUrl)
 
         editSearchContacts = findViewById(R.id.editSearchContacts)
         layoutContactsContainer = findViewById(R.id.layoutContactsContainer)
@@ -353,6 +378,73 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateRegistrationUi(LinphoneManager.lastRegistrationStatus, LinphoneManager.isRegistered)
+
+        // Populate active server URL
+        editServerUrl.setText(ServerConfigManager.baseUrl)
+
+        btnPresetEmulator.setOnClickListener {
+            editServerUrl.setText(ServerConfigManager.DEFAULT_EMULATOR_URL)
+        }
+
+        btnPresetDefault.setOnClickListener {
+            val defaultUrl = ServerConfigManager.resetToDefault()
+            editServerUrl.setText(defaultUrl)
+            Toast.makeText(this, "Reset to build default URL", Toast.LENGTH_SHORT).show()
+            testServerConnection(defaultUrl)
+        }
+
+        btnTestServerConnection.setOnClickListener {
+            val candidateUrl = editServerUrl.text.toString().trim()
+            if (candidateUrl.isNotBlank()) {
+                testServerConnection(candidateUrl)
+            } else {
+                Toast.makeText(this, "Please enter a server URL", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        btnSaveServerUrl.setOnClickListener {
+            val newUrl = editServerUrl.text.toString().trim()
+            if (newUrl.isNotBlank()) {
+                val ok = ServerConfigManager.setServerUrl(newUrl)
+                if (ok) {
+                    Toast.makeText(this, "Server URL updated!", Toast.LENGTH_SHORT).show()
+                    testServerConnection(newUrl)
+                    loadContacts()
+                } else {
+                    Toast.makeText(this, "Failed to save server URL", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // Run background initial health check
+        testServerConnection(ServerConfigManager.baseUrl)
+    }
+
+    private fun testServerConnection(urlToTest: String) {
+        textServerStatusBadge.text = "Testing..."
+        textServerStatusBadge.setBackgroundResource(R.drawable.bg_badge_neutral)
+        textServerStatusBadge.setTextColor(getColor(R.color.satark_text_secondary))
+        textServerDiagnostics.text = "Contacting ${ServerConfigManager.cleanUrl(urlToTest)}/health..."
+
+        activityScope.launch {
+            val (isOnline, message) = ServerConfigManager.testConnection(urlToTest)
+            runOnUiThread {
+                if (isOnline) {
+                    textServerStatusBadge.text = "Online"
+                    textServerStatusBadge.setBackgroundResource(R.drawable.bg_badge_safe)
+                    textServerStatusBadge.setTextColor(getColor(R.color.satark_safe_green))
+                    textHeaderServerStatus.text = "● Server Online"
+                    textHeaderServerStatus.setTextColor(getColor(R.color.satark_safe_green))
+                } else {
+                    textServerStatusBadge.text = "Offline"
+                    textServerStatusBadge.setBackgroundResource(R.drawable.bg_badge_scam)
+                    textServerStatusBadge.setTextColor(getColor(R.color.satark_scam_red))
+                    textHeaderServerStatus.text = "● Server Offline"
+                    textHeaderServerStatus.setTextColor(getColor(R.color.satark_scam_red))
+                }
+                textServerDiagnostics.text = message
+            }
+        }
     }
 
     private fun startMonitoredCall(

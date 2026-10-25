@@ -36,7 +36,7 @@ object AudioTransferManager {
         confidence: Double
     ) {
 
-        val endpoint = BuildConfig.AUDIO_UPLOAD_URL
+        val endpoint = ServerConfigManager.predictUrl
 
         if (endpoint.isBlank()) {
             Log.e(TAG, "Backend URL is empty")

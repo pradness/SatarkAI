@@ -55,6 +55,24 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
+        <!-- Server Connection Status Indicator -->
+        <TextView
+            android:id="@+id/textHeaderServerStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_chip"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingLeft="10dp"
+            android:paddingTop="6dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="6dp"
+            android:text="● Server"
+            android:textColor="@color/satark_text_muted"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
         <!-- SIP Connection Status Indicator -->
         <TextView
             android:id="@+id/textHeaderSipStatus"
@@ -393,6 +411,143 @@
                         android:text="Line Unregistered"
                         android:textColor="@color/satark_text_secondary"
                         android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Backend Server Connection Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_card_white"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Backend Server URL"
+                            android:textColor="@color/satark_navy"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/textServerStatusBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_badge_neutral"
+                            android:paddingLeft="10dp"
+                            android:paddingTop="4dp"
+                            android:paddingRight="10dp"
+                            android:paddingBottom="4dp"
+                            android:text="Unknown"
+                            android:textColor="@color/satark_text_secondary"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Enter local Wi-Fi IP, Emulator alias, or public Tunnel URL."
+                        android:textColor="@color/satark_text_secondary"
+                        android:textSize="12sp" />
+
+                    <EditText
+                        android:id="@+id/editServerUrl"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_input"
+                        android:hint="http://192.168.1.100:8000"
+                        android:inputType="textUri"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:textColor="@color/satark_text_primary"
+                        android:textColorHint="@color/satark_text_muted"
+                        android:textSize="13sp" />
+
+                    <!-- Preset Quick Action Buttons -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnPresetEmulator"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_chip"
+                            android:text="Emulator"
+                            android:textAllCaps="false"
+                            android:textColor="@color/satark_navy"
+                            android:textSize="11sp" />
+
+                        <Button
+                            android:id="@+id/btnPresetDefault"
+                            android:layout_width="0dp"
+                            android:layout_height="36dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/bg_chip"
+                            android:text="Reset Default"
+                            android:textAllCaps="false"
+                            android:textColor="@color/satark_navy"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnTestServerConnection"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_button_secondary"
+                            android:text="Test Connection"
+                            android:textAllCaps="false"
+                            android:textColor="@color/satark_navy"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <Button
+                            android:id="@+id/btnSaveServerUrl"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/bg_button_teal"
+                            android:text="Save &amp; Apply"
+                            android:textAllCaps="false"
+                            android:textColor="@color/satark_white"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textServerDiagnostics"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Tap 'Test Connection' to check server reachability."
+                        android:textColor="@color/satark_text_muted"
+                        android:textSize="11sp" />
                 </LinearLayout>
 
                 <!-- Demo & Guest Mode Helper Card -->

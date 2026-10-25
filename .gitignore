@@ -49,6 +49,12 @@ __pycache__/
 *.pyo
 
 # =========================
+# Node / Frontend
+# =========================
+node_modules/
+*/node_modules/
+
+# =========================
 # ML Training Checkpoints
 # =========================
 indica_vishing_model/checkpoint-*/

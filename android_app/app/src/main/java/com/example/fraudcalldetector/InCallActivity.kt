@@ -382,6 +382,13 @@ class InCallActivity : AppCompatActivity() {
         AudioTransferManager.startSession(sessId)
         AudioTransferManager.predictionListeners.add(predictionListener)
 
+        // Connect real-time encrypted audio WebSocket to server Whisper pipeline
+        AudioWebSocketClient.startCallSession(sessId)
+        AudioWebSocketClient.transcriptListeners.add(transcriptListener)
+        AudioWebSocketClient.predictionListeners.add { prediction, _ ->
+            predictionListener(prediction)
+        }
+
         val remote = intent.getStringExtra(EXTRA_REMOTE_ADDRESS).orEmpty()
         val contactName = intent.getStringExtra(EXTRA_CONTACT_NAME)
         val isIncoming = currentCall?.dir == Call.Dir.Incoming
@@ -403,7 +410,6 @@ class InCallActivity : AppCompatActivity() {
         }
 
         LinphoneManager.addCallStateListener(callStateListener)
-        WhisperTranscriptionManager.addListener(transcriptListener)
     }
 
     private fun finalizeCall(isMissed: Boolean = false) {
@@ -468,8 +474,9 @@ class InCallActivity : AppCompatActivity() {
         super.onStop()
         timerHandler.removeCallbacks(timerRunnable)
         LinphoneManager.removeCallStateListener(callStateListener)
-        WhisperTranscriptionManager.removeListener(transcriptListener)
         AudioTransferManager.predictionListeners.remove(predictionListener)
+        AudioWebSocketClient.stopCallSession()
+        AudioWebSocketClient.transcriptListeners.remove(transcriptListener)
     }
 
     override fun onDestroy() {

@@ -15,13 +15,16 @@ backend_dir = Path(__file__).resolve().parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, status, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import torch
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+from audio_crypto import decrypt_audio_frame
+from whisper_service import CallStreamSession, transcribe_pcm_array
 
 from database import close_db, ping_db
 from auth_services import (
@@ -464,8 +467,21 @@ def get_feedback(
 # --- ML Inference (IndicBERT) ---
 
 @app.post("/predict", response_model=PredictResponse)
-def predict(req: PredictRequest):
-    transcribed_text = req.text.strip()
+def classify_and_persist_transcript(
+    call_id: str,
+    text: str,
+    channel: str = "REMOTE",
+    language: str | None = "hinglish",
+    confidence: float = 0.95,
+    user_id: str | None = None,
+    timestamp_ms: int | None = None,
+    event_id: str | None = None,
+    participants: list[str] | None = None,
+) -> tuple[str, float]:
+    """Classifies transcript text via IndicBERT and persists to MongoDB."""
+    transcribed_text = text.strip()
+    if not transcribed_text:
+        return "SAFE", 1.0
 
     inputs = tokenizer(
         transcribed_text,
@@ -485,10 +501,10 @@ def predict(req: PredictRequest):
     predicted_label = LABELS.get(pred_idx, "UNKNOWN")
 
     print_formatted_log(
-        session_id=req.session_id,
-        channel=req.channel,
-        language=req.language,
-        vosk_conf=req.confidence,
+        session_id=call_id,
+        channel=channel,
+        language=language or "UNKNOWN",
+        vosk_conf=confidence,
         dialogue=transcribed_text,
         pred_label=predicted_label,
         safe_prob=safe_prob,
@@ -503,32 +519,50 @@ def predict(req: PredictRequest):
         )
 
     saved, persist_error = save_transcript_segment(
-        call_id=req.session_id,
+        call_id=call_id,
         text=transcribed_text,
-        language=req.language if req.language and req.language != "UNKNOWN" else None,
-        channel=req.channel,
-        timestamp_ms=req.timestamp_ms,
+        language=language if language and language != "UNKNOWN" else None,
+        channel=channel,
+        timestamp_ms=timestamp_ms,
         prediction_label=predicted_label,
         prediction_confidence=round(prediction_confidence, 4),
-        user_id=req.user_id,
-        event_id=req.event_id,
+        user_id=user_id,
+        event_id=event_id,
         threat_reason=threat_reason,
     )
     if persist_error:
-        logger.error("Transcript not persisted for call_id=%s: %s", req.session_id, persist_error)
+        logger.error("Transcript not persisted for call_id=%s: %s", call_id, persist_error)
     elif saved:
-        logger.info("Transcript persisted id=%s call_id=%s", saved.get("_id"), req.session_id)
+        logger.info("Transcript persisted id=%s call_id=%s", saved.get("_id"), call_id)
 
     if saved:
         ok, call_error = upsert_call(
-            call_id=req.session_id,
-            participants=req.participants,
+            call_id=call_id,
+            participants=participants,
             prediction_label=predicted_label,
             prediction_confidence=round(prediction_confidence, 4),
-            user_id=req.user_id,
+            user_id=user_id,
         )
         if not ok:
-            logger.error("Call record not updated for call_id=%s: %s", req.session_id, call_error)
+            logger.error("Call record not updated for call_id=%s: %s", call_id, call_error)
+
+    return predicted_label, prediction_confidence
+
+
+@app.post("/predict", response_model=PredictResponse)
+def predict(req: PredictRequest):
+    transcribed_text = req.text.strip()
+    predicted_label, prediction_confidence = classify_and_persist_transcript(
+        call_id=req.session_id,
+        text=transcribed_text,
+        channel=req.channel,
+        language=req.language,
+        confidence=req.confidence,
+        user_id=req.user_id,
+        timestamp_ms=req.timestamp_ms,
+        event_id=req.event_id,
+        participants=req.participants,
+    )
 
     return PredictResponse(
         prediction=predicted_label,
@@ -536,6 +570,80 @@ def predict(req: PredictRequest):
         session_id=req.session_id,
         transcript=transcribed_text,
     )
+
+
+@app.websocket("/ws/audio/{call_id}")
+async def websocket_audio_stream(websocket: WebSocket, call_id: str):
+    """
+    Real-time encrypted audio streaming WebSocket endpoint.
+    Receives AES-GCM encrypted 16kHz PCM chunks from Android client,
+    decrypts, accumulates utterances with VAD, transcribes via Whisper,
+    classifies with IndicBERT, and returns live transcript/prediction events.
+    """
+    await websocket.accept()
+    logger.info("🎙️ WebSocket audio stream connected for call_id=%s", call_id)
+
+    session = CallStreamSession(call_id)
+
+    try:
+        while True:
+            data = await websocket.receive_bytes()
+            try:
+                channel, timestamp_ms, pcm_bytes = decrypt_audio_frame(data, call_id)
+            except Exception as dec_err:
+                logger.warning("Decryption failed for call_id=%s: %s", call_id, dec_err)
+                continue
+
+            buffer = session.get_buffer(channel)
+            utterance_samples = buffer.push_chunk(pcm_bytes, timestamp_ms)
+
+            if utterance_samples is not None:
+                try:
+                    transcript = transcribe_pcm_array(utterance_samples)
+                except Exception as asr_err:
+                    logger.error("Whisper transcription error: %s", asr_err)
+                    transcript = ""
+
+                if transcript.strip():
+                    pred_label, pred_conf = classify_and_persist_transcript(
+                        call_id=call_id,
+                        text=transcript,
+                        channel=channel,
+                        language="hinglish",
+                        confidence=0.95,
+                        timestamp_ms=timestamp_ms,
+                    )
+                    await websocket.send_json({
+                        "event": "transcript",
+                        "call_id": call_id,
+                        "channel": channel,
+                        "text": transcript,
+                        "prediction": pred_label,
+                        "confidence": round(pred_conf, 4),
+                        "timestamp_ms": timestamp_ms,
+                    })
+
+    except WebSocketDisconnect:
+        logger.info("WebSocket audio stream disconnected for call_id=%s", call_id)
+        # Flush any remaining audio in buffers
+        for ch in ["LOCAL", "REMOTE"]:
+            buf = session.get_buffer(ch)
+            remaining_samples = buf.flush()
+            if remaining_samples is not None:
+                try:
+                    transcript = transcribe_pcm_array(remaining_samples)
+                    if transcript.strip():
+                        pred_label, pred_conf = classify_and_persist_transcript(
+                            call_id=call_id,
+                            text=transcript,
+                            channel=ch,
+                            language="hinglish",
+                            confidence=0.95,
+                        )
+                except Exception as flush_err:
+                    logger.warning("Flush transcription error on disconnect: %s", flush_err)
+    except Exception as e:
+        logger.error("Error in websocket audio stream for call_id=%s: %s", call_id, e)
 
 
 # ============================================================================

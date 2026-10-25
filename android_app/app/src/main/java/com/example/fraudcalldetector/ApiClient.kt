@@ -15,17 +15,9 @@ object ApiClient {
 
     private const val TAG = "SatarkAI-Api"
 
-    // Derive base URL from BuildConfig.AUDIO_UPLOAD_URL (e.g. "http://192.168.29.91:8000/predict" -> "http://192.168.29.91:8000")
-    val baseUrl: String by lazy {
-        val uploadUrl = BuildConfig.AUDIO_UPLOAD_URL.trim()
-        if (uploadUrl.contains("/predict")) {
-            uploadUrl.substringBeforeLast("/predict")
-        } else if (uploadUrl.isNotBlank()) {
-            uploadUrl.removeSuffix("/")
-        } else {
-            "http://192.168.29.91:8000"
-        }
-    }
+    // Dynamic base URL supplied by ServerConfigManager (survives network & IP changes)
+    val baseUrl: String
+        get() = ServerConfigManager.baseUrl
 
     private fun getCurrentUserId(): String {
         return try {

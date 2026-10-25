@@ -41,6 +41,15 @@ python backend/server.py
 - **Interactive API Documentation**: `http://127.0.0.1:8000/docs`
 - **Cyber-Investigation Dashboard**: `http://127.0.0.1:8000/dashboard/` (or root `http://127.0.0.1:8000/`)
 
+### Exposing Server Across Networks (Android 4G/5G & Wi-Fi)
+
+To connect an Android phone to your local backend from anywhere in the world (even across cellular networks without port forwarding):
+
+```bash
+./backend/start_tunnel.sh
+```
+Copy the generated `https://*.trycloudflare.com` URL and paste it into the Android app's **SIP Line & Settings** tab under **Backend Server URL**, then tap **Save & Apply**.
+
 ## API Endpoints
 
 ### Inference & Calls

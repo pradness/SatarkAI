@@ -48,7 +48,8 @@ object AudioCaptureManager {
         UiDebugLogger.log("Starting audio capture [Call dir=$callDirection, remote=$remoteUri, recordFile=$recordFilePath]")
 
         startCapture(outgoingRecord, incomingFile) { chunk, channel ->
-            WhisperTranscriptionManager.transcribePcmChunk(chunk, 16000, channel)
+            // Stream encrypted audio frame in real time to the server Whisper pipeline
+            AudioWebSocketClient.sendAudioChunk(chunk, channel)
         }
     }
 
