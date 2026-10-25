@@ -9,6 +9,12 @@ from pathlib import Path
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+# Ensure the backend directory is in sys.path so local imports work seamlessly
+# regardless of whether the server is started from repo root or backend directory
+backend_dir = Path(__file__).resolve().parent
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -102,18 +108,24 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def _find_model_path() -> str:
     env_path = os.getenv("MODEL_PATH", "").strip()
-    if env_path and os.path.exists(env_path):
+    if env_path:
+        if os.path.exists(env_path):
+            return env_path
+        repo_env = Path(__file__).resolve().parent.parent / env_path
+        if repo_env.exists():
+            return str(repo_env)
         return env_path
+
     here = Path(__file__).resolve().parent
     candidates = [
-        here.parents[2] / "indica_vishing_model",
+        here.parent / "indica_vishing_model",
         Path.cwd() / "indica_vishing_model",
         here,
     ]
     for p in candidates:
-        if (p / "model.safetensors").is_file():
+        if (p / "model.safetensors").is_file() or (p / "pytorch_model.bin").is_file():
             return str(p)
-    return env_path or "suyog17/indica-vishing-model"
+    return "suyog17/indica-vishing-model"
 
 
 MODEL_PATH = _find_model_path()
@@ -366,8 +378,8 @@ def update_call(
 
 @app.get("/calls")
 def get_call_history(
-    direction: str = Query(default="all", regex="^(all|incoming|outgoing)$"),
-    status: str = Query(default="all", regex="^(all|unknown|safe|scam)$"),
+    direction: str = Query(default="all", pattern="^(all|incoming|outgoing)$"),
+    status: str = Query(default="all", pattern="^(all|unknown|safe|scam)$"),
     search: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
@@ -610,9 +622,9 @@ def investigation_stats(investigator: dict = Depends(get_current_investigator)):
 
 @app.get("/investigation/calls")
 def investigation_call_list(
-    filter_type: str = Query(default="all", regex="^(all|flagged|reported|both)$"),
+    filter_type: str = Query(default="all", pattern="^(all|flagged|reported|both)$"),
     search: str | None = Query(default=None),
-    sort_by: str = Query(default="date_desc", regex="^(date_desc|date_asc|duration)$"),
+    sort_by: str = Query(default="date_desc", pattern="^(date_desc|date_asc|duration)$"),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=15, ge=1, le=100),
     investigator: dict = Depends(get_current_investigator),
@@ -743,7 +755,22 @@ def admin_update_investigator(
 # Cyber Monitoring Web Dashboard Static Mount
 # ============================================================================
 
-dashboard_dist = Path(__file__).resolve().parents[3] / "monitoring_dashboard" / "dist"
+dashboard_dist = Path(__file__).resolve().parent.parent / "monitoring_dashboard" / "dist"
 if dashboard_dist.is_dir():
     app.mount("/dashboard", StaticFiles(directory=str(dashboard_dist), html=True), name="dashboard")
+    assets_dir = dashboard_dist / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="dashboard-assets")
     logger.info("Mounted Cyber Investigation Dashboard from %s", dashboard_dist)
+
+
+@app.get("/")
+def root_redirect():
+    if dashboard_dist.is_dir():
+        return RedirectResponse(url="/dashboard/")
+    return {"message": "SatarkAI Backend API Running", "docs": "/docs"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,7 +1,14 @@
 import logging
 import math
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+# Ensure backend directory is in sys.path
+backend_dir = Path(__file__).resolve().parent
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
 
 from pymongo import ASCENDING, DESCENDING
 from pymongo.errors import PyMongoError

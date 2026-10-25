@@ -1,4 +1,4 @@
-const API_BASE = '';
+const API_BASE = (import.meta.env && import.meta.env.VITE_API_BASE) || '';
 
 export function getAuthToken() {
   return localStorage.getItem('satarkai_jwt_token');
@@ -6,7 +6,6 @@ export function getAuthToken() {
 
 export function setAuthToken(token) {
   if (token) {
-    localStorage.getItem('satarkai_jwt_token', token);
     localStorage.setItem('satarkai_jwt_token', token);
   } else {
     localStorage.removeItem('satarkai_jwt_token');
