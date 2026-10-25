@@ -1,14 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SatarkAI" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="Theme.SatarkAI" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/satark_bg</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@color/satark_bg</item>
-        <item name="colorPrimary">@color/satark_primary</item>
-        <item name="colorPrimaryDark">@color/satark_primary_dark</item>
-        <item name="colorAccent">@color/satark_accent</item>
-        <item name="android:textColorPrimary">@color/satark_text</item>
+        <item name="android:statusBarColor">@color/satark_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/satark_card</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="colorPrimary">@color/satark_navy</item>
+        <item name="colorPrimaryDark">@color/satark_navy_dark</item>
+        <item name="colorSecondary">@color/satark_teal</item>
+        <item name="colorAccent">@color/satark_teal</item>
+        <item name="android:textColorPrimary">@color/satark_text_primary</item>
         <item name="android:textColorSecondary">@color/satark_text_secondary</item>
-        <item name="android:editTextColor">@color/satark_text</item>
+        <item name="android:editTextColor">@color/satark_text_primary</item>
+    </style>
+
+    <!-- Theme for Fullscreen In-Call Experience -->
+    <style name="Theme.SatarkAI.Calling" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/satark_call_screen_bg</item>
+        <item name="android:statusBarColor">@color/satark_call_screen_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/satark_call_screen_bg</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="colorPrimary">@color/satark_teal</item>
+        <item name="colorAccent">@color/satark_teal</item>
+        <item name="android:textColorPrimary">@color/satark_white</item>
+        <item name="android:textColorSecondary">@color/satark_text_muted</item>
     </style>
 </resources>

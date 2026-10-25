@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bubbleRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:orientation="vertical">
+
+    <!-- USER Bubble (Right aligned) -->
+    <LinearLayout
+        android:id="@+id/containerUserBubble"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginStart="64dp"
+        android:background="@drawable/bg_chat_user"
+        android:elevation="1dp"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="You"
+            android:textColor="#E0F2FE"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textUserMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:lineSpacingExtra="2dp"
+            android:text="I didn't make any international transactions."
+            android:textColor="@color/satark_white"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/textUserTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="4dp"
+            android:text="02:46 PM"
+            android:textColor="#CCFBF1"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- CALLER Normal Bubble (Left aligned) -->
+    <LinearLayout
+        android:id="@+id/containerCallerNormalBubble"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:layout_marginEnd="64dp"
+        android:background="@drawable/bg_chat_caller"
+        android:elevation="1dp"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/textCallerNameHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Caller"
+            android:textColor="@color/satark_text_secondary"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textCallerNormalMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:lineSpacingExtra="2dp"
+            android:text="Welcome to State Bank support. How can I assist you today?"
+            android:textColor="@color/satark_text_primary"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/textCallerNormalTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="4dp"
+            android:text="11:15 AM"
+            android:textColor="@color/satark_text_muted"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- CALLER Scam-Flagged Bubble (Left aligned, RED HIGHLIGHT) -->
+    <LinearLayout
+        android:id="@+id/containerCallerScamBubble"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:layout_marginEnd="48dp"
+        android:background="@drawable/bg_chat_scam"
+        android:elevation="2dp"
+        android:orientation="vertical"
+        android:padding="14dp"
+        android:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:contentDescription="Scam alert"
+                android:src="@drawable/ic_shield_alert" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="SCAM INDICATOR DETECTED"
+                android:textColor="@color/satark_scam_red"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textCallerScamMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:lineSpacingExtra="2dp"
+            android:text="To block this transaction, read out the 6-digit verification code sent to your phone right now."
+            android:textColor="@color/satark_bubble_scam_text"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textThreatExplanation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="#FFE4E6"
+            android:paddingLeft="8dp"
+            android:paddingTop="3dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="3dp"
+            android:text="⚠️ Critical Vishing: Unauthorized verbal OTP extraction attempt"
+            android:textColor="#9F1239"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/textCallerScamTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="6dp"
+            android:text="02:46 PM"
+            android:textColor="#991B1B"
+            android:textSize="10sp" />
+    </LinearLayout>
+</LinearLayout>

@@ -31,7 +31,12 @@
             android:exported="false"
             android:launchMode="singleTop"
             android:showWhenLocked="true"
-            android:turnScreenOn="true" />
+            android:turnScreenOn="true"
+            android:theme="@style/Theme.SatarkAI.Calling" />
+
+        <activity
+            android:name=".TranscriptViewerActivity"
+            android:exported="false" />
 
         <activity
             android:name=".DialerActivity"

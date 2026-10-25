@@ -1,264 +1,402 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootCallingLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_app_gradient"
-    android:fillViewport="true">
+    android:background="@color/satark_call_screen_bg"
+    android:padding="20dp">
 
+    <!-- Top Status Bar & Simulation controls -->
     <LinearLayout
+        android:id="@+id/layoutTopBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_alignParentTop="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Security Threat Badge -->
+        <TextView
+            android:id="@+id/textStatusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_chip"
+            android:paddingLeft="14dp"
+            android:paddingTop="8dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="8dp"
+            android:text="🛡️ Protected by SatarkAI"
+            android:textColor="@color/satark_teal"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Mock / Simulation Toggle Pills for Testing Scam Detection UI -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btnSimulateSafe"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_safe"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingLeft="8dp"
+                android:paddingTop="4dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="4dp"
+                android:text="Safe Mock"
+                android:textColor="@color/satark_safe_green"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnSimulateScam"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_badge_scam"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingLeft="8dp"
+                android:paddingTop="4dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="4dp"
+                android:text="🚨 Test Scam"
+                android:textColor="@color/satark_scam_red"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Scrollable Central Content (Caller Info, Scam Alert, Live Transcripts) -->
+    <ScrollView
+        android:id="@+id/scrollCallingContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/layoutBottomControls"
+        android:layout_below="@+id/layoutTopBar"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_panel"
-            android:orientation="vertical"
-            android:padding="22dp">
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
+            <!-- Caller Avatar -->
             <TextView
-                android:id="@+id/textStatusBadge"
+                android:id="@+id/textCallerAvatar"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_avatar_circle"
+                android:gravity="center"
+                android:text="SB"
+                android:textColor="@color/satark_white"
+                android:textSize="32sp"
+                android:textStyle="bold" />
+
+            <!-- Caller Name -->
+            <TextView
+                android:id="@+id/textRemoteParty"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_chip_warning"
-                android:paddingLeft="14dp"
-                android:paddingTop="8dp"
-                android:paddingRight="14dp"
-                android:paddingBottom="8dp"
-                android:text="ANALYZING..."
-                android:textColor="@color/satark_bg"
+                android:layout_marginTop="16dp"
+                android:text="State Bank of India (Official)"
+                android:textColor="@color/satark_white"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <!-- Call Timer / State Subtitle -->
+            <TextView
+                android:id="@+id/textCallTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="00:48 • Active VoIP Session"
+                android:textColor="@color/satark_teal_light"
+                android:textSize="14sp" />
+
+            <!-- SCAM DETECTED Banner Box (Transitions in when scam is identified) -->
+            <LinearLayout
+                android:id="@+id/layoutScamWarningCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_scam_warning_box"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Scam alert"
+                        android:src="@drawable/ic_shield_alert" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="SCAM DETECTED"
+                        android:textColor="@color/satark_scam_red"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/textScamWarningReason"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="Caller is asking for a 6-digit OTP under false pretexts. Do not share codes. Hang up immediately."
+                    android:textColor="#7F1D1D"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/textConfidenceScore"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_badge_scam"
+                    android:paddingLeft="8dp"
+                    android:paddingTop="3dp"
+                    android:paddingRight="8dp"
+                    android:paddingBottom="3dp"
+                    android:text="Threat Confidence: 94% • High Risk Vishing"
+                    android:textColor="@color/satark_scam_red"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- View Live Transcript Toggle Button -->
+            <TextView
+                android:id="@+id/buttonToggleLiveTranscript"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_live_pill"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:text="💬 View Live Transcript"
+                android:textColor="@color/satark_teal"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/textRemoteParty"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:textColor="@color/satark_text"
-                android:textSize="28sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/call_status_live"
-                android:textColor="@color/satark_text_secondary"
-                android:textSize="15sp" />
-
+            <!-- WhatsApp-Style Live Dual-Speaker Transcript Panel (Hidden by default!) -->
             <LinearLayout
+                android:id="@+id/layoutLiveTranscriptPanel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/bg_panel_soft"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="14dp"
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="AI Vishing Inspection"
-                    android:textColor="@color/satark_text"
-                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp"
+                    android:text="LIVE CALL TRANSCRIPT"
+                    android:textColor="@color/satark_text_secondary"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/textScore"
+                <!-- Container where live chat bubbles are added -->
+                <LinearLayout
+                    android:id="@+id/layoutLiveBubblesContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_input"
-                    android:gravity="center"
-                    android:padding="14dp"
-                    android:text="Awaiting conversation audio..."
-                    android:textColor="@color/satark_text_secondary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Bottom Controls: Large intuitive calling buttons -->
+    <LinearLayout
+        android:id="@+id/layoutBottomControls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingBottom="12dp">
+
+        <!-- Incoming Call Decision (Accept / Reject) -->
+        <LinearLayout
+            android:id="@+id/layoutIncomingDecision"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/buttonReject"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:background="@drawable/bg_button_end_call"
+                    android:contentDescription="Reject Call"
+                    android:padding="18dp"
+                    android:src="@drawable/ic_phone_end" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Decline"
+                    android:textColor="@color/satark_white"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="60dp"
+                android:layout_height="1dp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/buttonAccept"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:background="@drawable/bg_button_accept_call"
+                    android:contentDescription="Accept Call"
+                    android:padding="18dp"
+                    android:src="@drawable/ic_phone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Accept"
+                    android:textColor="@color/satark_white"
+                    android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Active Call Controls: Speaker, End Call, Mute -->
         <LinearLayout
+            android:id="@+id/layoutActiveControls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:gravity="center"
             android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/buttonAccept"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button_primary"
-                android:text="Accept"
-                android:textAllCaps="false"
-                android:textColor="@color/satark_bg"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/buttonReject"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button_danger"
-                android:text="Reject"
-                android:textAllCaps="false"
-                android:textColor="@color/satark_text"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/buttonMute"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_marginEnd="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button_secondary"
-                android:text="Mute"
-                android:textAllCaps="false"
-                android:textColor="@color/satark_text"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/buttonSpeaker"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_marginLeft="4dp"
-                android:layout_marginRight="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button_secondary"
-                android:text="Speaker"
-                android:textAllCaps="false"
-                android:textColor="@color/satark_text"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/buttonHangup"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_marginStart="4dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_button_danger"
-                android:text="Hang Up"
-                android:textAllCaps="false"
-                android:textColor="@color/satark_text"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:background="@drawable/bg_panel"
-            android:orientation="vertical"
-            android:padding="20dp">
-
-            <TextView
+            <!-- Mute Toggle -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/outgoing_transcript_title"
-                android:textColor="@color/satark_text"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:gravity="center"
+                android:orientation="vertical">
 
-            <ScrollView
-                android:id="@+id/scrollOutgoingTranscript"
-                android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_input"
-                android:padding="14dp">
-
-                <TextView
-                    android:id="@+id/textOutgoingTranscript"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/waiting_for_speech"
-                    android:textColor="@color/satark_text"
-                    android:textIsSelectable="true"
-                    android:textSize="14sp" />
-            </ScrollView>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_panel"
-            android:orientation="vertical"
-            android:padding="20dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/incoming_transcript_title"
-                android:textColor="@color/satark_text"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <ScrollView
-                android:id="@+id/scrollIncomingTranscript"
-                android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_input"
-                android:padding="14dp">
+                <ImageButton
+                    android:id="@+id/buttonMute"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/bg_button_control"
+                    android:contentDescription="Mute"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_mic_mute" />
 
                 <TextView
-                    android:id="@+id/textIncomingTranscript"
-                    android:layout_width="match_parent"
+                    android:id="@+id/textMuteLabel"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/waiting_for_speech"
-                    android:textColor="@color/satark_text"
-                    android:textIsSelectable="true"
-                    android:textSize="14sp" />
-            </ScrollView>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_panel"
-            android:orientation="vertical"
-            android:padding="20dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/debug_logs_title"
-                android:textColor="@color/satark_text"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <ScrollView
-                android:id="@+id/scrollDebugLogs"
-                android:layout_width="match_parent"
-                android:layout_height="160dp"
-                android:layout_marginTop="12dp"
-                android:background="@color/satark_log_bg"
-                android:padding="14dp">
-
-                <TextView
-                    android:id="@+id/textDebugLogs"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/no_logs"
-                    android:textColor="@color/satark_log_text"
-                    android:textIsSelectable="true"
+                    android:layout_marginTop="6dp"
+                    android:text="Mute"
+                    android:textColor="@color/satark_text_muted"
                     android:textSize="12sp" />
-            </ScrollView>
+            </LinearLayout>
+
+            <!-- End Call (Large prominent red button) -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="36dp"
+                android:layout_marginEnd="36dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/buttonHangup"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:background="@drawable/bg_button_end_call"
+                    android:contentDescription="End Call"
+                    android:padding="18dp"
+                    android:src="@drawable/ic_phone_end" />
+
+                <TextView
+                    android:id="@+id/textHangupLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="End Call"
+                    android:textColor="@color/satark_white"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Speaker Toggle -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/buttonSpeaker"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/bg_button_control"
+                    android:contentDescription="Speaker"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_speaker" />
+
+                <TextView
+                    android:id="@+id/textSpeakerLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Speaker"
+                    android:textColor="@color/satark_text_muted"
+                    android:textSize="12sp" />
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>
-</ScrollView>
+
+</RelativeLayout>

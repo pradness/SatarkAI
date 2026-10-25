@@ -7,3 +7,7 @@ pymongo
 pydantic
 python-dotenv
 indic-transliteration
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+dnspython

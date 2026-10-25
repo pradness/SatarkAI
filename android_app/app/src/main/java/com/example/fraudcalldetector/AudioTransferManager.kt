@@ -57,12 +57,19 @@ object AudioTransferManager {
                             "channel=$channel | language=$language | text='$text'"
                 )
 
+                val username = try {
+                    LinphoneManager.core.defaultAccount?.params?.identityAddress?.username ?: "suyog"
+                } catch (_: Throwable) {
+                    "suyog"
+                }
+
                 val payload = JSONObject()
                     .put("text", text)
                     .put("session_id", sessionId)
                     .put("channel", channel)
                     .put("language", language)
                     .put("confidence", confidence)
+                    .put("user_id", username)
                     .toString()
 
                 val response = postJson(
@@ -150,6 +157,12 @@ object AudioTransferManager {
                     "Content-Type",
                     "application/json; charset=utf-8"
                 )
+                val user = try {
+                    LinphoneManager.core.defaultAccount?.params?.identityAddress?.username ?: "suyog"
+                } catch (_: Throwable) {
+                    "suyog"
+                }
+                setRequestProperty("X-User-ID", user)
             }
 
         return try {

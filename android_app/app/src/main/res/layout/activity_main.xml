@@ -1,152 +1,553 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_app_gradient"
-    android:fillViewport="true">
+    android:background="@color/satark_bg"
+    android:orientation="vertical">
 
+    <!-- Top App Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:background="@color/satark_card"
+        android:elevation="3dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="14dp">
 
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:contentDescription="Logo"
+                    android:src="@drawable/ic_shield_check" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="SatarkAI"
+                    android:textColor="@color/satark_navy"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="AI Telephony &amp; Vishing Defense"
+                android:textColor="@color/satark_text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- SIP Connection Status Indicator -->
         <TextView
+            android:id="@+id/textHeaderSipStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_chip"
-            android:paddingLeft="14dp"
-            android:paddingTop="8dp"
-            android:paddingRight="14dp"
-            android:paddingBottom="8dp"
-            android:text="SatarkAI"
-            android:textColor="@color/satark_primary"
-            android:textSize="13sp"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingLeft="12dp"
+            android:paddingTop="6dp"
+            android:paddingRight="12dp"
+            android:paddingBottom="6dp"
+            android:text="● Unregistered"
+            android:textColor="@color/satark_teal"
+            android:textSize="12sp"
             android:textStyle="bold" />
+    </LinearLayout>
 
-        <TextView
+    <!-- Main Content Area (Dynamic Tabs: Contacts, History, Keypad, Account) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- 1. CONTACTS SECTION -->
+        <ScrollView
+            android:id="@+id/sectionContacts"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="@string/register_title"
-            android:textColor="@color/satark_text"
-            android:textSize="30sp" />
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="visible">
 
-        <TextView
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Search Input Bar -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_input"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="Search"
+                        android:src="@drawable/ic_search" />
+
+                    <EditText
+                        android:id="@+id/editSearchContacts"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="10dp"
+                        android:background="@null"
+                        android:hint="Search contacts by name or SIP ID..."
+                        android:inputType="text"
+                        android:textColor="@color/satark_text_primary"
+                        android:textColorHint="@color/satark_text_muted"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="VERIFIED DIRECTORY"
+                        android:textColor="@color/satark_text_muted"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tap call icon to place AI call"
+                        android:textColor="@color/satark_teal_dark"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <!-- Contacts list items container -->
+                <LinearLayout
+                    android:id="@+id/layoutContactsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- 2. CALL HISTORY SECTION -->
+        <ScrollView
+            android:id="@+id/sectionHistory"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:lineSpacingExtra="2dp"
-            android:text="@string/register_subtitle"
-            android:textColor="@color/satark_text_secondary"
-            android:textSize="15sp" />
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Call Logs &amp; Forensics"
+                    android:textColor="@color/satark_text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Click any call to open its full WhatsApp-style transcript evidence."
+                    android:textColor="@color/satark_text_secondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:id="@+id/layoutHistoryContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="vertical" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- 3. DIALER / KEYPAD SECTION -->
+        <ScrollView
+            android:id="@+id/sectionDialer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Dial input box -->
+                <EditText
+                    android:id="@+id/editDialAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_input"
+                    android:gravity="center"
+                    android:hint="Enter SIP address or number"
+                    android:inputType="textEmailAddress"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textColor="@color/satark_text_primary"
+                    android:textColorHint="@color/satark_text_muted"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <!-- Call Button -->
+                <Button
+                    android:id="@+id/btnDialCall"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_button_teal"
+                    android:text="📞 Start AI Monitored Call"
+                    android:textAllCaps="false"
+                    android:textColor="@color/satark_white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- Keypad Numeric Quick Shortcuts -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:background="@drawable/bg_card_white"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Quick Dial Test Lines"
+                        android:textColor="@color/satark_navy"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnQuickDialBank"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_button_secondary"
+                        android:text="🏢 State Bank Official Line (Safe Demo)"
+                        android:textAllCaps="false"
+                        android:textColor="@color/satark_text_primary"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btnQuickDialScam"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_badge_scam"
+                        android:text="🚨 Suspicious Vishing Line (Scam Demo)"
+                        android:textAllCaps="false"
+                        android:textColor="@color/satark_scam_red"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- 4. ACCOUNT / SIP LOGIN SECTION -->
+        <ScrollView
+            android:id="@+id/sectionAccount"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SIP Line Credentials"
+                    android:textColor="@color/satark_navy"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Authenticate with your SIP VoIP provider to place encrypted calls."
+                    android:textColor="@color/satark_text_secondary"
+                    android:textSize="14sp" />
+
+                <!-- Login Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:background="@drawable/bg_card_white"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SIP Username"
+                        android:textColor="@color/satark_text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:id="@+id/editSIPUsername"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input"
+                        android:hint="e.g. user@sip.linphone.org"
+                        android:inputType="textEmailAddress"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:textColor="@color/satark_text_primary"
+                        android:textColorHint="@color/satark_text_muted"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="SIP Password"
+                        android:textColor="@color/satark_text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:id="@+id/editSIPPassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_input"
+                        android:hint="••••••••••••"
+                        android:inputType="textPassword"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:textColor="@color/satark_text_primary"
+                        android:textColorHint="@color/satark_text_muted"
+                        android:textSize="14sp" />
+
+                    <Button
+                        android:id="@+id/buttonRegister"
+                        android:layout_width="match_parent"
+                        android:layout_height="54dp"
+                        android:layout_marginTop="20dp"
+                        android:background="@drawable/bg_button_primary"
+                        android:text="Connect Line"
+                        android:textAllCaps="false"
+                        android:textColor="@color/satark_white"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/textRegistrationStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_badge_neutral"
+                        android:paddingLeft="12dp"
+                        android:paddingTop="5dp"
+                        android:paddingRight="12dp"
+                        android:paddingBottom="5dp"
+                        android:text="Line Unregistered"
+                        android:textColor="@color/satark_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Demo & Guest Mode Helper Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_panel_soft"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Developer &amp; Testing Mode"
+                        android:textColor="@color/satark_navy"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="You can explore Contacts, Calling UI, and Transcripts directly using the pre-loaded simulated profiles without connecting a SIP server."
+                        android:textColor="@color/satark_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+
+    </FrameLayout>
+
+    <!-- Bottom Navigation Bar -->
+    <LinearLayout
+        android:id="@+id/bottomNavBar"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:background="@color/satark_card"
+        android:elevation="8dp"
+        android:orientation="horizontal">
+
+        <!-- Contacts Tab -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:background="@drawable/bg_panel"
-            android:orientation="vertical"
-            android:padding="22dp">
+            android:id="@+id/tabBtnContacts"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/iconTabContacts"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="Contacts"
+                android:src="@drawable/ic_contacts" />
 
             <TextView
+                android:id="@+id/textTabContacts"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="SIP credentials"
-                android:textColor="@color/satark_text"
-                android:textSize="18sp"
+                android:layout_marginTop="3dp"
+                android:text="Contacts"
+                android:textColor="@color/satark_teal"
+                android:textSize="11sp"
                 android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/editSIPUsername"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/bg_input"
-                android:hint="@string/sip_username_hint"
-                android:inputType="textEmailAddress"
-                android:paddingLeft="18dp"
-                android:paddingRight="18dp"
-                android:textColor="@color/satark_text"
-                android:textColorHint="@color/satark_text_muted" />
-
-            <EditText
-                android:id="@+id/editSIPPassword"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_input"
-                android:hint="@string/sip_password_hint"
-                android:inputType="textPassword"
-                android:paddingLeft="18dp"
-                android:paddingRight="18dp"
-                android:textColor="@color/satark_text"
-                android:textColorHint="@color/satark_text_muted" />
-
-            <Button
-                android:id="@+id/buttonRegister"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/bg_button_primary"
-                android:text="@string/register_action"
-                android:textAllCaps="false"
-                android:textColor="@color/satark_bg"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/textRegistrationStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_chip"
-                android:paddingLeft="14dp"
-                android:paddingTop="8dp"
-                android:paddingRight="14dp"
-                android:paddingBottom="8dp"
-                android:text="Unregistered"
-                android:textColor="@color/satark_text_secondary"
-                android:textSize="14sp" />
         </LinearLayout>
 
+        <!-- Recents / History Tab -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:background="@drawable/bg_panel_soft"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:id="@+id/tabBtnHistory"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/iconTabHistory"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="History"
+                android:src="@drawable/ic_history" />
 
             <TextView
+                android:id="@+id/textTabHistory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Next step"
-                android:textColor="@color/satark_text"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="3dp"
+                android:text="Recents"
+                android:textColor="@color/satark_text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Keypad / Dialer Tab -->
+        <LinearLayout
+            android:id="@+id/tabBtnDialer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/iconTabDialer"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="Keypad"
+                android:src="@drawable/ic_dialpad" />
 
             <TextView
-                android:layout_width="match_parent"
+                android:id="@+id/textTabDialer"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Open the dialer once registration succeeds and place a monitored call."
-                android:textColor="@color/satark_text_secondary"
-                android:textSize="14sp" />
+                android:layout_marginTop="3dp"
+                android:text="Keypad"
+                android:textColor="@color/satark_text_muted"
+                android:textSize="11sp" />
+        </LinearLayout>
 
-            <Button
-                android:id="@+id/buttonDialer"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_button_secondary"
-                android:text="@string/open_dialer_action"
-                android:textAllCaps="false"
-                android:textColor="@color/satark_text"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+        <!-- Account / SIP Settings Tab -->
+        <LinearLayout
+            android:id="@+id/tabBtnAccount"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/iconTabAccount"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="SIP Line"
+                android:src="@drawable/ic_settings" />
+
+            <TextView
+                android:id="@+id/textTabAccount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="SIP Line"
+                android:textColor="@color/satark_text_muted"
+                android:textSize="11sp" />
         </LinearLayout>
 
     </LinearLayout>
-</ScrollView>
+
+</LinearLayout>

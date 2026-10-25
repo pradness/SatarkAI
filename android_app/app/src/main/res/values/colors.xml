@@ -1,19 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="satark_bg">#0A1220</color>
-    <color name="satark_bg_top">#14253C</color>
-    <color name="satark_surface">#152338</color>
-    <color name="satark_surface_alt">#1B2D46</color>
-    <color name="satark_surface_soft">#223653</color>
-    <color name="satark_stroke">#2E4667</color>
-    <color name="satark_primary">#78E7B5</color>
-    <color name="satark_primary_dark">#3DC28C</color>
-    <color name="satark_accent">#8DB8FF</color>
-    <color name="satark_warning">#FFD166</color>
-    <color name="satark_danger">#FF7F8A</color>
-    <color name="satark_text">#F6F8FC</color>
-    <color name="satark_text_secondary">#A9BCD5</color>
-    <color name="satark_text_muted">#7E93B2</color>
-    <color name="satark_log_bg">#09111C</color>
-    <color name="satark_log_text">#D8FFE8</color>
+    <!-- Brand Visual Identity (Fintech / Security Calling App) -->
+    <color name="satark_navy">#101828</color>
+    <color name="satark_navy_light">#1E293B</color>
+    <color name="satark_navy_surface">#172236</color>
+    <color name="satark_navy_dark">#0B0F19</color>
+
+    <color name="satark_teal">#14B8A6</color>
+    <color name="satark_teal_dark">#0D9488</color>
+    <color name="satark_teal_light">#5EEAD4</color>
+    <color name="satark_teal_soft">#F0FDFA</color>
+
+    <!-- Neutral Backgrounds & Cards -->
+    <color name="satark_bg">#F8FAFC</color>
+    <color name="satark_card">#FFFFFF</color>
+    <color name="satark_card_alt">#F1F5F9</color>
+    <color name="satark_border">#E2E8F0</color>
+    <color name="satark_border_focus">#14B8A6</color>
+    <color name="satark_divider">#EDF2F7</color>
+
+    <!-- Typography Slate scale -->
+    <color name="satark_text_primary">#0F172A</color>
+    <color name="satark_text_secondary">#475569</color>
+    <color name="satark_text_muted">#94A3B8</color>
+    <color name="satark_white">#FFFFFF</color>
+
+    <!-- Scam Alert Colors -->
+    <color name="satark_scam_red">#DC2626</color>
+    <color name="satark_scam_red_dark">#991B1B</color>
+    <color name="satark_scam_red_bg">#FEF2F2</color>
+    <color name="satark_scam_border">#FCA5A5</color>
+    <color name="satark_scam_badge">#7F1D1D</color>
+
+    <!-- Safe / Success & Warning Status -->
+    <color name="satark_safe_green">#10B981</color>
+    <color name="satark_safe_bg">#ECFDF5</color>
+    <color name="satark_safe_border">#A7F3D0</color>
+    <color name="satark_warning_amber">#F59E0B</color>
+    <color name="satark_warning_bg">#FFFBEB</color>
+
+    <!-- Calling Screen & Controls -->
+    <color name="satark_call_screen_bg">#101828</color>
+    <color name="satark_call_screen_scam_bg">#450A0A</color>
+    <color name="satark_control_btn_bg">#1E293B</color>
+    <color name="satark_control_btn_active">#14B8A6</color>
+    <color name="satark_call_end_btn">#DC2626</color>
+    <color name="satark_call_accept_btn">#10B981</color>
+
+    <!-- WhatsApp Style Chat Bubbles -->
+    <color name="satark_bubble_user">#14B8A6</color>
+    <color name="satark_bubble_user_text">#FFFFFF</color>
+    <color name="satark_bubble_caller">#FFFFFF</color>
+    <color name="satark_bubble_caller_text">#0F172A</color>
+    <color name="satark_bubble_scam">#FEF2F2</color>
+    <color name="satark_bubble_scam_text">#991B1B</color>
+    <color name="satark_bubble_scam_border">#F87171</color>
+    <color name="satark_chat_timestamp_light">#E0F2FE</color>
+    <color name="satark_chat_timestamp_dark">#94A3B8</color>
+
+    <!-- Backward-compatible aliases for existing Kotlin references -->
+    <color name="satark_primary">#14B8A6</color>
+    <color name="satark_primary_dark">#0D9488</color>
+    <color name="satark_accent">#101828</color>
+    <color name="satark_surface">#FFFFFF</color>
+    <color name="satark_surface_alt">#F1F5F9</color>
+    <color name="satark_surface_soft">#F8FAFC</color>
+    <color name="satark_stroke">#E2E8F0</color>
+    <color name="satark_text">#0F172A</color>
+    <color name="satark_warning">#F59E0B</color>
+    <color name="satark_danger">#DC2626</color>
+    <color name="satark_log_bg">#0F172A</color>
+    <color name="satark_log_text">#5EEAD4</color>
 </resources>
