@@ -3,7 +3,7 @@
     android:shape="rectangle">
     <solid android:color="@color/satark_scam_red_bg" />
     <stroke
-        android:width="2dp"
-        android:color="@color/satark_scam_red" />
+        android:width="1.5dp"
+        android:color="@color/satark_scam_border" />
     <corners android:radius="16dp" />
 </shape>

@@ -1,7 +1,9 @@
-package com.example.satarkai
+package com.satarkai
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -158,26 +161,24 @@ class InCallActivity : AppCompatActivity() {
             isTranscriptVisible = !isTranscriptVisible
             if (isTranscriptVisible) {
                 liveTranscriptPanel.visibility = View.VISIBLE
-                toggleTranscriptButton.text = "Hide Live Transcript"
+                toggleTranscriptButton.text = "Hide Transcript"
                 scrollContent.post {
                     scrollContent.fullScroll(View.FOCUS_DOWN)
                 }
             } else {
                 liveTranscriptPanel.visibility = View.GONE
-                toggleTranscriptButton.text = "💬 View Live Transcript"
+                toggleTranscriptButton.text = "Transcript"
             }
         }
 
         // Mute button logic
         muteButton.setOnClickListener {
-            currentCall?.let { call ->
-                isMuted = !isMuted
-                LinphoneManager.toggleMute(call, isMuted)
-                updateMuteUi()
-            } ?: run {
-                isMuted = !isMuted
-                updateMuteUi()
-            }
+            isMuted = !isMuted
+            val call = currentCall ?: LinphoneManager.getCurrentCall()
+            currentCall = call
+            LinphoneManager.toggleMute(call, isMuted)
+            AudioCaptureManager.isLocalMuted = isMuted
+            updateMuteUi()
         }
 
         // Speaker button logic
@@ -201,12 +202,15 @@ class InCallActivity : AppCompatActivity() {
 
         // Incoming Call Accept & Reject
         acceptButton.setOnClickListener {
-            val accepted = currentCall?.let { call ->
+            val callToAccept = currentCall ?: LinphoneManager.getCurrentCall()
+            currentCall = callToAccept
+            val accepted = callToAccept?.let { call ->
                 LinphoneManager.acceptCall(call)
                 true
             } ?: LinphoneManager.acceptPendingIncomingCall()
 
             if (accepted) {
+                currentCall = currentCall ?: LinphoneManager.getCurrentCall()
                 statusBadge.text = "CONNECTED"
                 incomingDecisionLayout.visibility = View.GONE
                 activeControlsLayout.visibility = View.VISIBLE
@@ -273,10 +277,12 @@ class InCallActivity : AppCompatActivity() {
     private fun updateMuteUi() {
         if (isMuted) {
             muteButton.setBackgroundResource(R.drawable.bg_button_control_active)
+            muteButton.setColorFilter(getColor(R.color.satark_teal))
             muteLabel.text = "Muted"
             muteLabel.setTextColor(getColor(R.color.satark_teal))
         } else {
             muteButton.setBackgroundResource(R.drawable.bg_button_control)
+            muteButton.setColorFilter(getColor(R.color.satark_white))
             muteLabel.text = "Mute"
             muteLabel.setTextColor(getColor(R.color.satark_text_muted))
         }
@@ -296,18 +302,18 @@ class InCallActivity : AppCompatActivity() {
 
     fun transitionToScamUi(confidence: Float, reason: String) {
         isScamState = true
-        rootLayout.setBackgroundColor(Color.parseColor("#3B0707"))
+        rootLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.satark_call_screen_scam_bg))
 
-        statusBadge.text = "🚨 SCAM DETECTED"
+        statusBadge.text = "SCAM DETECTED"
         statusBadge.setBackgroundResource(R.drawable.bg_badge_scam)
-        statusBadge.setTextColor(Color.parseColor("#DC2626"))
+        statusBadge.setTextColor(ContextCompat.getColor(this, R.color.satark_scam_red))
 
         scamWarningCard.visibility = View.VISIBLE
         scamReasonLabel.text = reason
         confidenceLabel.text = "Threat Confidence: ${(confidence * 100).toInt()}% • High Risk Vishing"
 
         // Make transcript button highlight in red
-        toggleTranscriptButton.setTextColor(Color.parseColor("#DC2626"))
+        toggleTranscriptButton.setTextColor(ContextCompat.getColor(this, R.color.satark_scam_red))
 
         scrollContent.post {
             scrollContent.smoothScrollTo(0, scamWarningCard.top)
@@ -318,7 +324,7 @@ class InCallActivity : AppCompatActivity() {
         isScamState = false
         rootLayout.setBackgroundColor(getColor(R.color.satark_call_screen_bg))
 
-        statusBadge.text = "🛡️ Protected by SatarkAI"
+        statusBadge.text = "Protected by SatarkAI"
         statusBadge.setBackgroundResource(R.drawable.bg_chip)
         statusBadge.setTextColor(getColor(R.color.satark_teal))
 
@@ -347,7 +353,7 @@ class InCallActivity : AppCompatActivity() {
             callerNormal.visibility = View.GONE
             callerScam.visibility = View.VISIBLE
             bubbleView.findViewById<TextView>(R.id.textCallerScamMessage).text = message
-            bubbleView.findViewById<TextView>(R.id.textThreatExplanation).text = "⚠️ Flagged by IndicBERT as Vishing Cue"
+            bubbleView.findViewById<TextView>(R.id.textThreatExplanation).text = "Flagged by IndicBERT as Vishing Cue"
             bubbleView.findViewById<TextView>(R.id.textCallerScamTime).text = currentTime
         } else {
             userBubble.visibility = View.GONE
@@ -439,7 +445,7 @@ class InCallActivity : AppCompatActivity() {
                 activeControlsLayout.visibility = View.GONE
             }
             Call.State.StreamsRunning -> {
-                statusBadge.text = "🛡️ Protected by SatarkAI"
+                statusBadge.text = "Protected by SatarkAI"
                 incomingDecisionLayout.visibility = View.GONE
                 activeControlsLayout.visibility = View.VISIBLE
                 startTimer()
@@ -477,10 +483,20 @@ class InCallActivity : AppCompatActivity() {
         AudioTransferManager.predictionListeners.remove(predictionListener)
         AudioWebSocketClient.stopCallSession()
         AudioWebSocketClient.transcriptListeners.remove(transcriptListener)
+        AudioCaptureManager.isLocalMuted = false
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager
+        try {
+            audioManager?.isMicrophoneMute = false
+        } catch (_: Exception) {}
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        AudioCaptureManager.isLocalMuted = false
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager
+        try {
+            audioManager?.isMicrophoneMute = false
+        } catch (_: Exception) {}
         finalizeCall(isMissed = false)
         activityScope.cancel()
     }

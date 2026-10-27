@@ -40,8 +40,8 @@ class WebSocketAudioEndpointTests(unittest.TestCase):
             pcm_samples = (np.sin(2 * np.pi * 440 * t) * 10000).astype(np.int16)
             pcm_bytes = pcm_samples.tobytes()
 
-            # Push 3 loud chunks (enough for speech)
-            for i in range(3):
+            # Push 15 loud chunks (1.5s speech, exceeding 1.2s min_speech threshold)
+            for i in range(15):
                 frame = encrypt_audio_frame(
                     pcm_bytes=pcm_bytes,
                     channel="REMOTE",
@@ -50,13 +50,13 @@ class WebSocketAudioEndpointTests(unittest.TestCase):
                 )
                 websocket.send_bytes(frame)
 
-            # Push 6 silent chunks to trigger VAD utterance boundary
+            # Push 11 silent chunks to trigger VAD utterance boundary (silence_duration_chunks = 10)
             silent_pcm = np.zeros(1600, dtype=np.int16).tobytes()
-            for i in range(6):
+            for i in range(11):
                 frame = encrypt_audio_frame(
                     pcm_bytes=silent_pcm,
                     channel="REMOTE",
-                    timestamp_ms=1729864200300 + i * 100,
+                    timestamp_ms=1729864201500 + i * 100,
                     session_id=call_id,
                 )
                 websocket.send_bytes(frame)

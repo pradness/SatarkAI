@@ -1,4 +1,4 @@
-package com.example.satarkai
+package com.satarkai
 
 import android.graphics.Color
 import android.os.Bundle
@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -79,15 +80,16 @@ class TranscriptViewerActivity : AppCompatActivity() {
                     activityScope.launch {
                         val (success, msg) = ApiClient.reportCall(callId, userReason, "Reported by user from call evidence viewer")
                         if (success) {
-                            buttonReportCall.text = "Reported ✅"
-                            buttonReportCall.setBackgroundColor(Color.parseColor("#475569"))
+                            buttonReportCall.text = "Reported"
+                            buttonReportCall.setBackgroundResource(R.drawable.bg_badge_neutral)
+                            buttonReportCall.setTextColor(ContextCompat.getColor(this@TranscriptViewerActivity, R.color.satark_text_secondary))
                             textReportStatus.text = "Dossier sent to Cyber Investigation Cell."
-                            textReportStatus.setTextColor(Color.parseColor("#10B981"))
+                            textReportStatus.setTextColor(ContextCompat.getColor(this@TranscriptViewerActivity, R.color.satark_safe_green))
                         } else {
                             buttonReportCall.isEnabled = true
-                            buttonReportCall.text = "🚨 Report Call as Scam"
+                            buttonReportCall.text = "Report Scam"
                             textReportStatus.text = msg
-                            textReportStatus.setTextColor(Color.parseColor("#EF4444"))
+                            textReportStatus.setTextColor(ContextCompat.getColor(this@TranscriptViewerActivity, R.color.satark_scam_red))
                         }
                     }
                 }
@@ -126,36 +128,36 @@ class TranscriptViewerActivity : AppCompatActivity() {
                 val pct = if (confidence > 0) " (${(confidence * 100).toInt()}%)" else ""
                 headerThreatBadge.text = "SCAM$pct"
                 headerThreatBadge.setBackgroundResource(R.drawable.bg_badge_scam)
-                headerThreatBadge.setTextColor(Color.parseColor("#DC2626"))
+                headerThreatBadge.setTextColor(ContextCompat.getColor(this, R.color.satark_scam_red))
 
                 cardEvidence.setBackgroundResource(R.drawable.bg_scam_warning_box)
                 imageThreatIcon.setImageResource(R.drawable.ic_shield_alert)
                 textThreatTitle.text = "CRITICAL VISHING DETECTED"
-                textThreatTitle.setTextColor(Color.parseColor("#DC2626"))
+                textThreatTitle.setTextColor(ContextCompat.getColor(this, R.color.satark_scam_red))
                 textThreatDetails.text = if (threatSummary.isNotBlank()) threatSummary else "High risk vishing cues detected in conversation."
-                textThreatDetails.setTextColor(Color.parseColor("#7F1D1D"))
+                textThreatDetails.setTextColor(ContextCompat.getColor(this, R.color.satark_scam_banner_text))
             }
             CallSecurityStatus.SAFE -> {
                 headerThreatBadge.text = "VERIFIED SAFE"
                 headerThreatBadge.setBackgroundResource(R.drawable.bg_badge_safe)
-                headerThreatBadge.setTextColor(Color.parseColor("#10B981"))
+                headerThreatBadge.setTextColor(ContextCompat.getColor(this, R.color.satark_safe_green))
 
                 cardEvidence.setBackgroundResource(R.drawable.bg_panel)
                 imageThreatIcon.setImageResource(R.drawable.ic_shield_check)
                 textThreatTitle.text = "SECURE VERIFIED SESSION"
-                textThreatTitle.setTextColor(Color.parseColor("#10B981"))
+                textThreatTitle.setTextColor(ContextCompat.getColor(this, R.color.satark_safe_green))
                 textThreatDetails.text = if (threatSummary.isNotBlank()) threatSummary else "Verified regular conversation. No credential harvesting or coercion detected."
-                textThreatDetails.setTextColor(Color.parseColor("#475569"))
+                textThreatDetails.setTextColor(ContextCompat.getColor(this, R.color.satark_text_secondary))
             }
             CallSecurityStatus.UNVERIFIED -> {
                 headerThreatBadge.text = "UNVERIFIED"
                 headerThreatBadge.setBackgroundResource(R.drawable.bg_badge_neutral)
-                headerThreatBadge.setTextColor(getColor(R.color.satark_text_muted))
+                headerThreatBadge.setTextColor(ContextCompat.getColor(this, R.color.satark_text_muted))
 
                 cardEvidence.setBackgroundResource(R.drawable.bg_panel)
                 imageThreatIcon.setImageResource(R.drawable.ic_shield_check)
                 textThreatTitle.text = "UNVERIFIED CALL SESSION"
-                textThreatTitle.setTextColor(getColor(R.color.satark_teal))
+                textThreatTitle.setTextColor(ContextCompat.getColor(this, R.color.satark_teal))
                 textThreatDetails.text = if (threatSummary.isNotBlank()) threatSummary else "Call had no speech data or inconclusive signals."
                 textThreatDetails.setTextColor(getColor(R.color.satark_text_secondary))
             }
@@ -201,7 +203,7 @@ class TranscriptViewerActivity : AppCompatActivity() {
                     threatReasonView.text = msg.threatReason
                     threatReasonView.visibility = View.VISIBLE
                 } else {
-                    threatReasonView.text = "⚠️ Flagged by IndicBERT as Vishing Cue"
+                    threatReasonView.text = "Flagged by IndicBERT as Vishing Cue"
                     threatReasonView.visibility = View.VISIBLE
                 }
                 bubbleView.findViewById<TextView>(R.id.textCallerScamTime).text = msg.timeFormatted

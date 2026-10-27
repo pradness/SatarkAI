@@ -1,7 +1,9 @@
+import asyncio
 import logging
 import math
 import os
 import sys
+import time
 import unicodedata
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -22,9 +24,28 @@ import torch
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from transformers import logging as hf_logging
+
+# Suppress internal transformers deprecation warnings for clean, minimal logs
+hf_logging.set_verbosity_error()
 
 from audio_crypto import decrypt_audio_frame
-from whisper_service import CallStreamSession, transcribe_pcm_array
+from audio_playback import AudioPlaybackService
+from whisper_service import (
+    CallStreamSession,
+    GHOST_NOISE_TOKENS,
+    get_whisper_engine,
+    transcribe_pcm_array,
+    transcribe_pcm_array_timed,
+)
+
+# Server Runtime Flags (can be set via CLI flags or environment variables)
+ENABLE_PLAYBACK = "--playback" in sys.argv or "--all" in sys.argv or "-a" in sys.argv or os.getenv("SERVER_PLAYBACK", "0").lower() in ("1", "true", "yes")
+ENABLE_TRANSCRIPT = "--transcript" in sys.argv or "--all" in sys.argv or "-a" in sys.argv or os.getenv("SERVER_TRANSCRIPT", "0").lower() in ("1", "true", "yes")
+ENABLE_FRAUD = "--fraud" in sys.argv or "--all" in sys.argv or "-a" in sys.argv or os.getenv("SERVER_FRAUD", "0").lower() in ("1", "true", "yes")
+
+# Audio playback manager for real-time incoming audio streaming
+audio_player = AudioPlaybackService(enabled=ENABLE_PLAYBACK)
 
 from database import close_db, ping_db
 from auth_services import (
@@ -71,17 +92,51 @@ logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    global ENABLE_PLAYBACK, ENABLE_TRANSCRIPT, ENABLE_FRAUD
+
+    # Sync flags from environment (in case flags were parsed by uvicorn CLI wrapper)
+    if os.getenv("SERVER_PLAYBACK", "0").lower() in ("1", "true", "yes"):
+        ENABLE_PLAYBACK = True
+    if os.getenv("SERVER_TRANSCRIPT", "0").lower() in ("1", "true", "yes"):
+        ENABLE_TRANSCRIPT = True
+    if os.getenv("SERVER_FRAUD", "0").lower() in ("1", "true", "yes"):
+        ENABLE_FRAUD = True
+
+    audio_player.enabled = ENABLE_PLAYBACK
+
     ok, message = ping_db()
     if ok:
         logger.info("MongoDB: %s", message)
         idx_ok, idx_message = init_db_indexes()
-        if idx_ok:
-            logger.info("MongoDB: %s", idx_message)
-        else:
+        if not idx_ok:
             logger.error("MongoDB: %s", idx_message)
     else:
         logger.error("MongoDB unavailable at startup: %s", message)
+
+    # Preload Whisper ASR model on GPU at startup
+    try:
+        logger.info("🎙️ Preloading Whisper ASR speech model at server startup...")
+        get_whisper_engine()
+        logger.info("✅ Whisper ASR model preloaded successfully on %s.", device)
+    except Exception as w_err:
+        logger.error("❌ Failed to preload Whisper ASR model: %s", w_err)
+
+    if ENABLE_PLAYBACK:
+        audio_player.start()
+
+    banner = (
+        f"\n{'=' * 72}\n"
+        f"  🚀 SatarkAI Call Intelligence Server [Device: {device}]\n"
+        f"  🔊 Playback   : {'ENABLED' if ENABLE_PLAYBACK else 'DISABLED'} (--playback)\n"
+        f"  🎙️ Transcript : {'ENABLED' if ENABLE_TRANSCRIPT else 'DISABLED'} (--transcript)\n"
+        f"  🤖 Fraud Logs : {'ENABLED' if ENABLE_FRAUD else 'DISABLED'} (--fraud)\n"
+        f"{'=' * 72}\n"
+    )
+    print(banner, flush=True)
+
     yield
+
+    audio_player.stop()
     close_db()
 
 app = FastAPI(
@@ -93,9 +148,10 @@ app = FastAPI(
 
 @app.middleware("http")
 async def log_requests(request, call_next):
-    print(f"📥 INCOMING: {request.method} {request.url.path}", flush=True)
+    # Quiet error logging; eliminates noisy console spam on high-frequency /health polls
     response = await call_next(request)
-    print(f"📤 RESPONSE: {response.status_code} {request.url.path}", flush=True)
+    if response.status_code >= 400:
+        logger.warning("%s %s -> %s", request.method, request.url.path, response.status_code)
     return response
 
 app.add_middleware(
@@ -169,6 +225,39 @@ def transliterate_hindi_to_english(text: str) -> str:
     return text
 
 
+def log_fraud_prediction(
+    call_id: str,
+    pred_label: str,
+    confidence: float,
+    safe_prob: float,
+    scam_prob: float,
+    latency: float = 0.0,
+    text: str = "",
+):
+    """Outputs minimal, simple fraud model result when --fraud is enabled."""
+    if not ENABLE_FRAUD:
+        return
+
+    is_scam = pred_label == "SCAM"
+    tag = f"{COLOR_RED}🚨 [FRAUD] SCAM{COLOR_RESET}" if is_scam else f"{COLOR_GREEN}✅ [FRAUD] SAFE{COLOR_RESET}"
+    conf_pct = round(confidence * 100, 1)
+    latency_ms = int(latency * 1000)
+    print(
+        f"{tag} ({conf_pct}%) [Safe: {safe_prob*100:.1f}% | Scam: {scam_prob*100:.1f}%] ({latency_ms}ms)",
+        flush=True,
+    )
+
+
+def log_transcript_output(channel: str, text: str, latency: float = 0.0):
+    """Outputs minimal, simple transcript line when --transcript is enabled."""
+    if not ENABLE_TRANSCRIPT or not text:
+        return
+
+    ch_color = COLOR_CYAN if channel.upper() == "REMOTE" else COLOR_YELLOW
+    latency_ms = int(latency * 1000)
+    print(f"🎙️ [TRANSCRIPT] [{ch_color}{channel.upper()}{COLOR_RESET}] \"{text}\" ({latency_ms}ms)", flush=True)
+
+
 def print_formatted_log(
     session_id: str,
     channel: str,
@@ -179,28 +268,18 @@ def print_formatted_log(
     safe_prob: float,
     scam_prob: float,
     pred_conf: float,
+    latency: float = 0.0,
 ):
-    is_scam = pred_label == "SCAM"
-    main_color = COLOR_RED if is_scam else COLOR_GREEN
-    status_tag = "🚨 SCAM DETECTED" if is_scam else "✅ SAFE TRANSCRIPT"
-
-    display_dialogue = transliterate_hindi_to_english(dialogue)
-    if display_dialogue != dialogue:
-        display_dialogue = f"{display_dialogue} ({dialogue})"
-
-    filled_bar = int(scam_prob * 20)
-    bar = "█" * filled_bar + "░" * (20 - filled_bar)
-
-    print("\n" + main_color + "┌" + "─" * 78 + "┐" + COLOR_RESET)
-    print(main_color + "│ " + COLOR_RESET + f"{status_tag:<30}" + f"Session: {session_id[:36]}".rjust(48) + main_color + " │" + COLOR_RESET)
-    print(main_color + "├" + "─" * 78 + "┤" + COLOR_RESET)
-    print(main_color + "│ " + COLOR_RESET + f"Channel  : {COLOR_CYAN}{channel:<12}{COLOR_RESET} Language : {COLOR_CYAN}{language:<12}{COLOR_RESET} Vosk Conf : {COLOR_YELLOW}{vosk_conf:.2f}{COLOR_RESET}".ljust(96) + main_color + "│" + COLOR_RESET)
-    print(main_color + "│ " + COLOR_RESET + f"Dialogue : {COLOR_YELLOW}\"{display_dialogue[:70]}\"{COLOR_RESET}".ljust(96) + main_color + "│" + COLOR_RESET)
-    print(main_color + "├" + "─" * 78 + "┤" + COLOR_RESET)
-    print(main_color + "│ " + COLOR_RESET + f"SAFE Prob : {COLOR_GREEN}{safe_prob:.4f}{COLOR_RESET} | SCAM Prob : {COLOR_RED}{scam_prob:.4f}{COLOR_RESET}".ljust(96) + main_color + "│" + COLOR_RESET)
-    print(main_color + "│ " + COLOR_RESET + f"Risk Score: [{COLOR_RED if scam_prob > 0.5 else COLOR_GREEN}{bar}{COLOR_RESET}] {scam_prob * 100:>5.1f}%".ljust(96) + main_color + "│" + COLOR_RESET)
-    print(main_color + "│ " + COLOR_RESET + f"PREDICTION: {main_color}{pred_label}{COLOR_RESET} (Confidence: {pred_conf:.4f})".ljust(96) + main_color + "│" + COLOR_RESET)
-    print(main_color + "└" + "─" * 78 + "┘" + COLOR_RESET + "\n")
+    """Legacy helper maintained for backward compatibility; routes to minimal log_fraud_prediction."""
+    log_fraud_prediction(
+        call_id=session_id,
+        pred_label=pred_label,
+        confidence=pred_conf,
+        safe_prob=safe_prob,
+        scam_prob=scam_prob,
+        latency=latency,
+        text=dialogue,
+    )
 
 
 def get_current_user(
@@ -466,6 +545,19 @@ def get_feedback(
 
 # --- ML Inference (IndicBERT) ---
 
+class ClassificationResult(tuple):
+    """Tuple subclass returning (label, conf) for backward-compat while providing rich metrics."""
+    def __new__(cls, label: str, conf: float, safe_prob: float = 0.0, scam_prob: float = 0.0, latency: float = 0.0):
+        return super().__new__(cls, (label, conf))
+
+    def __init__(self, label: str, conf: float, safe_prob: float = 0.0, scam_prob: float = 0.0, latency: float = 0.0):
+        self.label = label
+        self.conf = conf
+        self.safe_prob = safe_prob
+        self.scam_prob = scam_prob
+        self.latency = latency
+
+
 @app.post("/predict", response_model=PredictResponse)
 def classify_and_persist_transcript(
     call_id: str,
@@ -477,20 +569,26 @@ def classify_and_persist_transcript(
     timestamp_ms: int | None = None,
     event_id: str | None = None,
     participants: list[str] | None = None,
-) -> tuple[str, float]:
-    """Classifies transcript text via IndicBERT and persists to MongoDB."""
+    context_text: str | None = None,
+) -> ClassificationResult:
+    """Classifies transcript text (or accumulated dialogue context) via IndicBERT and persists segment to MongoDB."""
     transcribed_text = text.strip()
     if not transcribed_text:
-        return "SAFE", 1.0
+        return ClassificationResult("SAFE", 1.0, safe_prob=1.0, scam_prob=0.0, latency=0.0)
 
+    # Use rolling context for fraud classification if available; otherwise use current utterance
+    eval_text = context_text.strip() if context_text and context_text.strip() else transcribed_text
+
+    t_start = time.perf_counter()
     inputs = tokenizer(
-        transcribed_text,
+        eval_text,
         return_tensors="pt",
         truncation=True,
+        max_length=128,
         padding=True,
     ).to(device)
 
-    with torch.no_grad():
+    with torch.inference_mode():
         logits = model(**inputs).logits
         probs = torch.softmax(logits, dim=1)[0]
         safe_prob = probs[0].item()
@@ -498,18 +596,21 @@ def classify_and_persist_transcript(
         pred_idx = torch.argmax(probs).item()
         prediction_confidence = probs[pred_idx].item()
 
+    model_latency = time.perf_counter() - t_start
     predicted_label = LABELS.get(pred_idx, "UNKNOWN")
 
-    print_formatted_log(
-        session_id=call_id,
-        channel=channel,
-        language=language or "UNKNOWN",
-        vosk_conf=confidence,
-        dialogue=transcribed_text,
+    dialogue_display = transcribed_text
+    if eval_text != transcribed_text:
+        dialogue_display = f"{transcribed_text}  [Context: \"{eval_text}\"]"
+
+    log_fraud_prediction(
+        call_id=call_id,
         pred_label=predicted_label,
+        confidence=prediction_confidence,
         safe_prob=safe_prob,
         scam_prob=scam_prob,
-        pred_conf=prediction_confidence,
+        latency=model_latency,
+        text=dialogue_display,
     )
 
     threat_reason = None
@@ -533,7 +634,7 @@ def classify_and_persist_transcript(
     if persist_error:
         logger.error("Transcript not persisted for call_id=%s: %s", call_id, persist_error)
     elif saved:
-        logger.info("Transcript persisted id=%s call_id=%s", saved.get("_id"), call_id)
+        logger.debug("Transcript persisted id=%s call_id=%s", saved.get("_id"), call_id)
 
     if saved:
         ok, call_error = upsert_call(
@@ -546,13 +647,19 @@ def classify_and_persist_transcript(
         if not ok:
             logger.error("Call record not updated for call_id=%s: %s", call_id, call_error)
 
-    return predicted_label, prediction_confidence
+    return ClassificationResult(
+        predicted_label,
+        prediction_confidence,
+        safe_prob=safe_prob,
+        scam_prob=scam_prob,
+        latency=model_latency,
+    )
 
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(req: PredictRequest):
     transcribed_text = req.text.strip()
-    predicted_label, prediction_confidence = classify_and_persist_transcript(
+    result = classify_and_persist_transcript(
         call_id=req.session_id,
         text=transcribed_text,
         channel=req.channel,
@@ -565,8 +672,8 @@ def predict(req: PredictRequest):
     )
 
     return PredictResponse(
-        prediction=predicted_label,
-        confidence=round(prediction_confidence, 4),
+        prediction=result.label,
+        confidence=round(result.conf, 4),
         session_id=req.session_id,
         transcript=transcribed_text,
     )
@@ -597,31 +704,77 @@ async def websocket_audio_stream(websocket: WebSocket, call_id: str):
             buffer = session.get_buffer(channel)
             utterance_samples = buffer.push_chunk(pcm_bytes, timestamp_ms)
 
+            # 1. Real-time audio playback through host speakers if --playback is enabled (play remote caller audio only)
+            if ENABLE_PLAYBACK and channel.upper() == "REMOTE":
+                audio_player.play_chunk(pcm_bytes)
+
             if utterance_samples is not None:
+                # 2. Run Whisper ASR in a thread pool so WebSocket loop never freezes
                 try:
-                    transcript = transcribe_pcm_array(utterance_samples)
+                    t_asr_start = time.perf_counter()
+                    transcript = await asyncio.to_thread(transcribe_pcm_array, utterance_samples)
+                    asr_elapsed = time.perf_counter() - t_asr_start
                 except Exception as asr_err:
                     logger.error("Whisper transcription error: %s", asr_err)
                     transcript = ""
+                    asr_elapsed = 0.0
 
-                if transcript.strip():
-                    pred_label, pred_conf = classify_and_persist_transcript(
-                        call_id=call_id,
-                        text=transcript,
-                        channel=channel,
-                        language="hinglish",
-                        confidence=0.95,
-                        timestamp_ms=timestamp_ms,
-                    )
-                    await websocket.send_json({
-                        "event": "transcript",
-                        "call_id": call_id,
-                        "channel": channel,
-                        "text": transcript,
-                        "prediction": pred_label,
-                        "confidence": round(pred_conf, 4),
-                        "timestamp_ms": timestamp_ms,
-                    })
+                clean_text = transcript.strip()
+                cleaned_lower = clean_text.lower().strip(" .!?,:;\"'")
+                # Filter out hallucinated ghost noise tokens ("n", "ne", "nan", "null", single letters, line static, etc.)
+                if (
+                    not clean_text
+                    or len(cleaned_lower) <= 1
+                    or cleaned_lower in GHOST_NOISE_TOKENS
+                    or clean_text.lower() in GHOST_NOISE_TOKENS
+                ):
+                    continue
+
+                # Suppress consecutive duplicate transcripts within a 2.5-second window (prevents echo / duplicate bursts)
+                now_sec = time.time()
+                last_text, last_time = session.last_emitted.get(channel, ("", 0.0))
+                if cleaned_lower == last_text and (now_sec - last_time) < 2.5:
+                    logger.debug("Suppressing duplicate transcript on %s: '%s'", channel, clean_text)
+                    continue
+                session.last_emitted[channel] = (cleaned_lower, now_sec)
+
+                # Accumulate into conversation history and get context window for fraud model
+                session.add_dialogue(clean_text)
+                dialogue_context = session.get_context_text(window_size=5)
+
+                # Minimal transcript log if --transcript is enabled
+                log_transcript_output(channel=channel, text=clean_text, latency=asr_elapsed)
+
+                # 3. Run IndicBERT fraud detection in thread pool with dialogue context
+                result = await asyncio.to_thread(
+                    classify_and_persist_transcript,
+                    call_id=call_id,
+                    text=clean_text,
+                    channel=channel,
+                    language="hinglish",
+                    confidence=0.95,
+                    timestamp_ms=timestamp_ms,
+                    context_text=dialogue_context,
+                )
+                pred_label = result.label
+                pred_conf = result.conf
+                model_elapsed = result.latency
+                total_elapsed = asr_elapsed + model_elapsed
+
+                await websocket.send_json({
+                    "event": "transcript",
+                    "call_id": call_id,
+                    "channel": channel,
+                    "text": clean_text,
+                    "prediction": pred_label,
+                    "confidence": round(pred_conf, 4),
+                    "timestamp_ms": timestamp_ms,
+                    "timings": {
+                        "whisper_asr_seconds": round(asr_elapsed, 3),
+                        "indicbert_seconds": round(model_elapsed, 3),
+                        "total_seconds": round(total_elapsed, 3),
+                    },
+                })
 
     except WebSocketDisconnect:
         logger.info("WebSocket audio stream disconnected for call_id=%s", call_id)
@@ -631,14 +784,23 @@ async def websocket_audio_stream(websocket: WebSocket, call_id: str):
             remaining_samples = buf.flush()
             if remaining_samples is not None:
                 try:
-                    transcript = transcribe_pcm_array(remaining_samples)
-                    if transcript.strip():
-                        pred_label, pred_conf = classify_and_persist_transcript(
+                    t_asr_start = time.perf_counter()
+                    transcript = await asyncio.to_thread(transcribe_pcm_array, remaining_samples)
+                    asr_elapsed = time.perf_counter() - t_asr_start
+                    clean_text = transcript.strip()
+                    cleaned_lower = clean_text.lower().strip(" .!?,:;\"'")
+                    if clean_text and cleaned_lower not in GHOST_NOISE_TOKENS and clean_text.lower() not in GHOST_NOISE_TOKENS:
+                        session.add_dialogue(clean_text)
+                        dialogue_context = session.get_context_text(window_size=5)
+                        log_transcript_output(channel=ch, text=clean_text, latency=asr_elapsed)
+                        await asyncio.to_thread(
+                            classify_and_persist_transcript,
                             call_id=call_id,
-                            text=transcript,
+                            text=clean_text,
                             channel=ch,
                             language="hinglish",
                             confidence=0.95,
+                            context_text=dialogue_context,
                         )
                 except Exception as flush_err:
                     logger.warning("Flush transcription error on disconnect: %s", flush_err)
@@ -880,5 +1042,65 @@ def root_redirect():
 
 
 if __name__ == "__main__":
+    import argparse
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    parser = argparse.ArgumentParser(
+        description="SatarkAI Production Backend - Real-time ASR & Vishing Detection"
+    )
+    parser.add_argument(
+        "--playback",
+        action="store_true",
+        default=ENABLE_PLAYBACK,
+        help="Play received call audio through host speakers in real time",
+    )
+    parser.add_argument(
+        "--transcript",
+        action="store_true",
+        default=ENABLE_TRANSCRIPT,
+        help="Print real-time ASR transcripts to terminal logs",
+    )
+    parser.add_argument(
+        "--fraud",
+        action="store_true",
+        default=ENABLE_FRAUD,
+        help="Print fraud model detection results to terminal logs",
+    )
+    parser.add_argument(
+        "--all", "-a",
+        action="store_true",
+        help="Enable playback, transcript logs, and fraud logs simultaneously",
+    )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=os.getenv("HOST", "0.0.0.0"),
+        help="Server bind host (default: 0.0.0.0)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.getenv("PORT", "8000")),
+        help="Server bind port (default: 8000)",
+    )
+    parser.add_argument(
+        "--reload",
+        action="store_true",
+        default=False,
+        help="Enable auto-reload on code change",
+    )
+
+    args = parser.parse_args()
+
+    if args.all:
+        ENABLE_PLAYBACK = True
+        ENABLE_TRANSCRIPT = True
+        ENABLE_FRAUD = True
+    else:
+        ENABLE_PLAYBACK = args.playback
+        ENABLE_TRANSCRIPT = args.transcript
+        ENABLE_FRAUD = args.fraud
+
+    audio_player.enabled = ENABLE_PLAYBACK
+
+    uvicorn.run(app, host=args.host, port=args.port, reload=args.reload)

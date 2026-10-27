@@ -1,5 +1,6 @@
-package com.example.satarkai
+package com.satarkai
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -43,6 +44,7 @@ object LinphoneManager {
 
     private val registrationListeners = CopyOnWriteArraySet<(String, Boolean) -> Unit>()
     private val callListeners = CopyOnWriteArraySet<(Call?, Call.State) -> Unit>()
+    private val activeRecordedCalls = java.util.Collections.synchronizedSet(HashSet<Call>())
 
     var lastRegistrationStatus: String = "Unregistered"
         private set
@@ -95,18 +97,24 @@ object LinphoneManager {
                     showIncomingCallNotification(remoteAddress)
                 }
                 Call.State.StreamsRunning -> {
-                    try {
-                        call.startRecording()
-                        UiDebugLogger.log("Linphone call recording started: ${call.params.recordFile}")
-                    } catch (e: Exception) {
-                        UiDebugLogger.log("Failed to start Linphone call recording: ${e.message}")
+                    if (!activeRecordedCalls.contains(call)) {
+                        activeRecordedCalls.add(call)
+                        try {
+                            call.startRecording()
+                            UiDebugLogger.log("Linphone call recording started: ${call.params.recordFile}")
+                        } catch (e: Exception) {
+                            UiDebugLogger.log("Failed to start Linphone call recording: ${e.message}")
+                        }
+                        try { AudioCaptureManager.startCapture(appContext, call) }
+                        catch (e: Throwable) { UiDebugLogger.log("startCapture failed: ${e.javaClass.simpleName}: ${e.message}") }
+                    } else {
+                        UiDebugLogger.log("StreamsRunning: capture already active for this call")
                     }
-                    try { AudioCaptureManager.startCapture(appContext, call) }
-                    catch (e: Throwable) { UiDebugLogger.log("startCapture failed: ${e.javaClass.simpleName}: ${e.message}") }
                 }
                 Call.State.End,
                 Call.State.Released,
                 Call.State.Error -> {
+                    activeRecordedCalls.remove(call)
                     try {
                         call.stopRecording()
                         UiDebugLogger.log("Linphone call recording stopped")
@@ -245,8 +253,23 @@ object LinphoneManager {
         runOnMain { call?.terminate() }
     }
 
-    fun toggleMute(call: Call, enabled: Boolean) {
-        runOnMain { call.microphoneMuted = enabled }
+    fun toggleMute(call: Call?, enabled: Boolean) {
+        runOnMain {
+            val targetCall = call ?: (if (::core.isInitialized) (core.currentCall ?: core.calls.firstOrNull()) else null)
+            targetCall?.microphoneMuted = enabled
+            if (::core.isInitialized) {
+                core.calls.forEach { it.microphoneMuted = enabled }
+                core.setMicEnabled(!enabled)
+            }
+            try {
+                val audioManager = appContext.getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager
+                audioManager?.isMicrophoneMute = enabled
+            } catch (e: Exception) {
+                UiDebugLogger.log("AudioManager mute toggle warning: ${e.message}")
+            }
+            AudioCaptureManager.isLocalMuted = enabled
+            UiDebugLogger.log("Microphone mute set to $enabled (call=${targetCall != null}, micMuted=${targetCall?.microphoneMuted}, micEnabled=${!enabled})")
+        }
     }
 
     fun toggleSpeaker(enabled: Boolean) {
@@ -273,7 +296,7 @@ object LinphoneManager {
         runOnMain { call?.terminate() }
     }
 
-    fun getCurrentCall(): Call? = core.currentCall
+    fun getCurrentCall(): Call? = if (::core.isInitialized) (core.currentCall ?: core.calls.firstOrNull()) else null
 
     fun addCallStateListener(listener: (Call?, Call.State) -> Unit) {
         callListeners.add(listener)
@@ -336,6 +359,7 @@ object LinphoneManager {
         manager.createNotificationChannel(channel)
     }
 
+    @SuppressLint("MissingPermission")
     private fun showIncomingCallNotification(remoteAddress: String) {
         val inCallIntent = Intent(appContext, InCallActivity::class.java).apply {
             putExtra(InCallActivity.EXTRA_REMOTE_ADDRESS, remoteAddress)

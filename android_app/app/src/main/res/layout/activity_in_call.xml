@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rootCallingLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -25,7 +26,7 @@
             android:paddingTop="8dp"
             android:paddingRight="14dp"
             android:paddingBottom="8dp"
-            android:text="🛡️ Protected by SatarkAI"
+            android:text="Protected by SatarkAI"
             android:textColor="@color/satark_teal"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -41,38 +42,52 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <TextView
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSimulateSafe"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_safe"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingLeft="8dp"
-                android:paddingTop="4dp"
-                android:paddingRight="8dp"
-                android:paddingBottom="4dp"
-                android:text="Safe Mock"
-                android:textColor="@color/satark_safe_green"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:layout_height="36dp"
+                android:backgroundTint="@color/satark_safe_bg"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                app:strokeColor="@color/satark_safe_border"
+                app:strokeWidth="1dp"
+                android:text="Safe"
+                android:textAllCaps="false"
+                android:textColor="@color/satark_safe_text"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_shield_check"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp"
+                app:iconSize="14dp"
+                app:iconTint="@color/satark_safe_text" />
 
-            <TextView
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSimulateScam"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="36dp"
                 android:layout_marginStart="6dp"
-                android:background="@drawable/bg_badge_scam"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingLeft="8dp"
-                android:paddingTop="4dp"
-                android:paddingRight="8dp"
-                android:paddingBottom="4dp"
-                android:text="🚨 Test Scam"
+                android:backgroundTint="@color/satark_scam_red_bg"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                app:strokeColor="@color/satark_scam_border"
+                app:strokeWidth="1dp"
+                android:text="Scam"
+                android:textAllCaps="false"
                 android:textColor="@color/satark_scam_red"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_shield_alert"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp"
+                app:iconSize="14dp"
+                app:iconTint="@color/satark_scam_red" />
         </LinearLayout>
     </LinearLayout>
 
@@ -148,7 +163,8 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:contentDescription="Scam alert"
-                        android:src="@drawable/ic_shield_alert" />
+                        android:src="@drawable/ic_shield_alert"
+                        app:tint="@color/satark_scam_red" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -167,7 +183,7 @@
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="2dp"
                     android:text="Caller is asking for a 6-digit OTP under false pretexts. Do not share codes. Hang up immediately."
-                    android:textColor="#7F1D1D"
+                    android:textColor="@color/satark_scam_banner_text"
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
@@ -187,22 +203,26 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- View Live Transcript Toggle Button -->
-            <TextView
+            <!-- View Live Transcript Toggle Button (Minimal text + Material Icon) -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonToggleLiveTranscript"
                 android:layout_width="wrap_content"
                 android:layout_height="42dp"
                 android:layout_marginTop="24dp"
-                android:background="@drawable/bg_live_pill"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:paddingLeft="20dp"
-                android:paddingRight="20dp"
-                android:text="💬 View Live Transcript"
+                android:backgroundTint="#1AFFFFFF"
+                app:strokeColor="@color/satark_teal"
+                app:strokeWidth="1.5dp"
+                android:text="Transcript"
+                android:textAllCaps="false"
                 android:textColor="@color/satark_teal"
                 android:textSize="13sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                app:cornerRadius="21dp"
+                app:icon="@drawable/ic_transcript"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconSize="18dp"
+                app:iconTint="@color/satark_teal" />
 
             <!-- WhatsApp-Style Live Dual-Speaker Transcript Panel (Hidden by default!) -->
             <LinearLayout
@@ -267,7 +287,8 @@
                     android:background="@drawable/bg_button_end_call"
                     android:contentDescription="Reject Call"
                     android:padding="18dp"
-                    android:src="@drawable/ic_phone_end" />
+                    android:src="@drawable/ic_phone_end"
+                    app:tint="@color/satark_white" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -295,7 +316,8 @@
                     android:background="@drawable/bg_button_accept_call"
                     android:contentDescription="Accept Call"
                     android:padding="18dp"
-                    android:src="@drawable/ic_phone" />
+                    android:src="@drawable/ic_phone"
+                    app:tint="@color/satark_white" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -329,7 +351,8 @@
                     android:background="@drawable/bg_button_control"
                     android:contentDescription="Mute"
                     android:padding="14dp"
-                    android:src="@drawable/ic_mic_mute" />
+                    android:src="@drawable/ic_mic_mute"
+                    app:tint="@color/satark_white" />
 
                 <TextView
                     android:id="@+id/textMuteLabel"
@@ -357,14 +380,15 @@
                     android:background="@drawable/bg_button_end_call"
                     android:contentDescription="End Call"
                     android:padding="18dp"
-                    android:src="@drawable/ic_phone_end" />
+                    android:src="@drawable/ic_phone_end"
+                    app:tint="@color/satark_white" />
 
                 <TextView
                     android:id="@+id/textHangupLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="End Call"
+                    android:text="End"
                     android:textColor="@color/satark_white"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -384,7 +408,8 @@
                     android:background="@drawable/bg_button_control"
                     android:contentDescription="Speaker"
                     android:padding="14dp"
-                    android:src="@drawable/ic_speaker" />
+                    android:src="@drawable/ic_speaker"
+                    app:tint="@color/satark_white" />
 
                 <TextView
                     android:id="@+id/textSpeakerLabel"

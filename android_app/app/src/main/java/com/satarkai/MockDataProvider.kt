@@ -1,4 +1,4 @@
-package com.example.satarkai
+package com.satarkai
 
 object MockDataProvider {
 
@@ -37,7 +37,7 @@ object MockDataProvider {
             id = "c4",
             name = "Unknown (+91 98765 43210)",
             handleOrPhone = "sip:scam-test@sip.linphone.org",
-            avatarInitials = "⚠️",
+            avatarInitials = "SC",
             avatarColorHex = "#DC2626",
             roleOrType = "Suspicious Vishing Number",
             isVerified = false,
@@ -57,7 +57,7 @@ object MockDataProvider {
             id = "c6",
             name = "Electricity Dept Alert",
             handleOrPhone = "sip:power-alert@sip.linphone.org",
-            avatarInitials = "⚡",
+            avatarInitials = "ED",
             avatarColorHex = "#F59E0B",
             roleOrType = "Automated Notice",
             isVerified = false,

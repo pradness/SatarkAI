@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
@@ -43,20 +44,14 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/textVerifiedBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <ImageView
+                android:id="@+id/imageVerifiedBadge"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginStart="6dp"
-                android:background="@drawable/bg_badge_safe"
-                android:paddingLeft="6dp"
-                android:paddingTop="2dp"
-                android:paddingRight="6dp"
-                android:paddingBottom="2dp"
-                android:text="VERIFIED"
-                android:textColor="@color/satark_safe_green"
-                android:textSize="10sp"
-                android:textStyle="bold"
+                android:contentDescription="Verified"
+                android:src="@drawable/ic_check_circle"
+                app:tint="@color/satark_safe_green"
                 android:visibility="visible" />
         </LinearLayout>
 
@@ -70,13 +65,14 @@
             android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- Call Action Button -->
+    <!-- Call Action Button (Minimal, Material Icon Button) -->
     <ImageButton
         android:id="@+id/buttonCallContact"
         android:layout_width="44dp"
         android:layout_height="44dp"
         android:background="@drawable/bg_button_teal"
-        android:contentDescription="Call Contact"
+        android:contentDescription="Call"
         android:padding="10dp"
-        android:src="@drawable/ic_phone" />
+        android:src="@drawable/ic_phone"
+        app:tint="@color/satark_btn_primary_text" />
 </LinearLayout>

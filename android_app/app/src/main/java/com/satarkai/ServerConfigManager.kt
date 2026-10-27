@@ -1,4 +1,4 @@
-package com.example.satarkai
+package com.satarkai
 
 import android.content.Context
 import android.content.SharedPreferences

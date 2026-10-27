@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.satarkai"
+    namespace = "com.satarkai"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.satarkai"
+        applicationId = "com.satarkai"
         minSdk = 29
         targetSdk = 34
         versionCode = 1

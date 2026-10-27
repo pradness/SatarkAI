@@ -110,6 +110,31 @@ class AudioBufferTests(unittest.TestCase):
         self.assertEqual(rem.channel, "REMOTE")
         self.assertIsNot(loc, rem)
 
+    def test_07_dialogue_history_context(self):
+        session = CallStreamSession("call_context_test")
+        session.add_dialogue("Namaste")
+        session.add_dialogue("Aapka bank account block ho gaya hai")
+        session.add_dialogue("Kripya OTP share kijiye")
+
+        ctx = session.get_context_text(window_size=3)
+        self.assertEqual(ctx, "Namaste Aapka bank account block ho gaya hai Kripya OTP share kijiye")
+
+        # Test window capping
+        ctx_recent = session.get_context_text(window_size=2)
+        self.assertEqual(ctx_recent, "Aapka bank account block ho gaya hai Kripya OTP share kijiye")
+
+    def test_08_ghost_noise_token_filtering(self):
+        from whisper_service import GHOST_NOISE_TOKENS, transcribe_pcm_array
+
+        self.assertIn("nan", GHOST_NOISE_TOKENS)
+        self.assertIn("null", GHOST_NOISE_TOKENS)
+        self.assertIn("you", GHOST_NOISE_TOKENS)
+
+        # Pure silence should be immediately filtered by RMS energy without running ASR
+        silent_samples = np.zeros(16000, dtype=np.int16)
+        result = transcribe_pcm_array(silent_samples)
+        self.assertEqual(result, "")
+
 
 if __name__ == "__main__":
     unittest.main()

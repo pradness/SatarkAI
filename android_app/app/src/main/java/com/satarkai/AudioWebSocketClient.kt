@@ -1,4 +1,4 @@
-package com.example.satarkai
+package com.satarkai
 
 import android.util.Log
 import okhttp3.OkHttpClient
@@ -7,6 +7,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
@@ -47,7 +48,7 @@ object AudioWebSocketClient {
         activeWebSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 isConnected = true
-                Log.i(TAG, "✅ Audio WebSocket connected for call $sessionId")
+                Log.i(TAG, "Audio WebSocket connected for call $sessionId")
                 UiDebugLogger.log("ASR WebSocket connected ($sessionId)")
             }
 
@@ -85,7 +86,7 @@ object AudioWebSocketClient {
             sessionId = currentSessionId
         ) ?: return
 
-        ws.send(ByteString.of(encryptedFrame, 0, encryptedFrame.size))
+        ws.send(encryptedFrame.toByteString(0, encryptedFrame.size))
     }
 
     private fun handleDownlinkMessage(jsonText: String) {

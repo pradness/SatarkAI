@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/satark_bg"
@@ -34,7 +35,8 @@
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:contentDescription="Logo"
-                    android:src="@drawable/ic_shield_check" />
+                    android:src="@drawable/ic_shield_check"
+                    app:tint="@color/satark_teal" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -56,39 +58,31 @@
         </LinearLayout>
 
         <!-- Server Connection Status Indicator -->
-        <TextView
-            android:id="@+id/textHeaderServerStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <ImageView
+            android:id="@+id/imageHeaderServerStatus"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_marginEnd="8dp"
             android:background="@drawable/bg_chip"
             android:clickable="true"
+            android:contentDescription="Server Status"
             android:focusable="true"
-            android:paddingLeft="10dp"
-            android:paddingTop="6dp"
-            android:paddingRight="10dp"
-            android:paddingBottom="6dp"
-            android:text="● Server"
-            android:textColor="@color/satark_text_muted"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:padding="8dp"
+            android:src="@drawable/ic_cloud_off"
+            app:tint="@color/satark_icon_normal" />
 
         <!-- SIP Connection Status Indicator -->
-        <TextView
-            android:id="@+id/textHeaderSipStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <ImageView
+            android:id="@+id/imageHeaderSipStatus"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:background="@drawable/bg_chip"
             android:clickable="true"
+            android:contentDescription="SIP Line Status"
             android:focusable="true"
-            android:paddingLeft="12dp"
-            android:paddingTop="6dp"
-            android:paddingRight="12dp"
-            android:paddingBottom="6dp"
-            android:text="● Unregistered"
-            android:textColor="@color/satark_teal"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:padding="8dp"
+            android:src="@drawable/ic_cloud_off"
+            app:tint="@color/satark_teal" />
     </LinearLayout>
 
     <!-- Main Content Area (Dynamic Tabs: Contacts, History, Keypad, Account) -->
@@ -125,7 +119,8 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:contentDescription="Search"
-                        android:src="@drawable/ic_search" />
+                        android:src="@drawable/ic_search"
+                        app:tint="@color/satark_icon_normal" />
 
                     <EditText
                         android:id="@+id/editSearchContacts"
@@ -159,7 +154,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Tap call icon to place AI call"
+                        android:text="Tap to place AI call"
                         android:textColor="@color/satark_teal_dark"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -200,7 +195,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Click any call to open its full WhatsApp-style transcript evidence."
+                    android:text="Tap any call to open full forensic transcript evidence."
                     android:textColor="@color/satark_text_secondary"
                     android:textSize="13sp" />
 
@@ -244,18 +239,23 @@
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <!-- Call Button -->
-                <Button
+                <!-- Call Button (Icon + Minimal Text) -->
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDialCall"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="16dp"
-                    android:background="@drawable/bg_button_teal"
-                    android:text="📞 Start AI Monitored Call"
+                    android:backgroundTint="@color/satark_btn_primary_bg"
+                    android:text="Call"
                     android:textAllCaps="false"
-                    android:textColor="@color/satark_white"
+                    android:textColor="@color/satark_btn_primary_text"
                     android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_phone"
+                    app:iconGravity="textStart"
+                    app:iconPadding="10dp"
+                    app:iconTint="@color/satark_btn_primary_text" />
 
                 <!-- Keypad Numeric Quick Shortcuts -->
                 <LinearLayout
@@ -274,28 +274,43 @@
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnQuickDialBank"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="50dp"
                         android:layout_marginTop="12dp"
-                        android:background="@drawable/bg_button_secondary"
-                        android:text="🏢 State Bank Official Line (Safe Demo)"
+                        android:backgroundTint="@color/satark_btn_secondary_bg"
+                        app:strokeColor="@color/satark_btn_secondary_border"
+                        app:strokeWidth="1dp"
+                        android:text="State Bank (Safe)"
                         android:textAllCaps="false"
-                        android:textColor="@color/satark_text_primary"
-                        android:textSize="13sp" />
+                        android:textColor="@color/satark_btn_secondary_text"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_bank"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/satark_safe_green" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnQuickDialScam"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="50dp"
                         android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_badge_scam"
-                        android:text="🚨 Suspicious Vishing Line (Scam Demo)"
+                        android:backgroundTint="@color/satark_btn_secondary_bg"
+                        app:strokeColor="@color/satark_scam_border"
+                        app:strokeWidth="1dp"
+                        android:text="Vishing Demo (Scam)"
                         android:textAllCaps="false"
                         android:textColor="@color/satark_scam_red"
                         android:textSize="13sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_warning"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/satark_scam_red" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -385,17 +400,22 @@
                         android:textColorHint="@color/satark_text_muted"
                         android:textSize="14sp" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/buttonRegister"
                         android:layout_width="match_parent"
-                        android:layout_height="54dp"
+                        android:layout_height="52dp"
                         android:layout_marginTop="20dp"
-                        android:background="@drawable/bg_button_primary"
-                        android:text="Connect Line"
+                        android:backgroundTint="@color/satark_btn_primary_bg"
+                        android:text="Connect"
                         android:textAllCaps="false"
-                        android:textColor="@color/satark_white"
+                        android:textColor="@color/satark_btn_primary_text"
                         android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_link"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/satark_btn_primary_text" />
 
                     <TextView
                         android:id="@+id/textRegistrationStatus"
@@ -411,6 +431,53 @@
                         android:text="Line Unregistered"
                         android:textColor="@color/satark_text_secondary"
                         android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Appearance & Dark Theme Switch Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_card_white"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Dark Theme"
+                        android:src="@drawable/ic_dark_mode"
+                        app:tint="@color/satark_icon_normal" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Dark Theme"
+                            android:textColor="@color/satark_text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Enable dark mode interface"
+                            android:textColor="@color/satark_text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchDarkMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
                 </LinearLayout>
 
                 <!-- Backend Server Connection Card -->
@@ -474,7 +541,7 @@
                         android:textColorHint="@color/satark_text_muted"
                         android:textSize="13sp" />
 
-                    <!-- Preset Quick Action Buttons -->
+                    <!-- Preset Quick Action Buttons (Icon + Minimal Text) -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -482,29 +549,45 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnPresetEmulator"
                             android:layout_width="0dp"
-                            android:layout_height="36dp"
+                            android:layout_height="42dp"
                             android:layout_weight="1"
                             android:layout_marginEnd="6dp"
-                            android:background="@drawable/bg_chip"
+                            android:backgroundTint="@color/satark_btn_secondary_bg"
+                            app:strokeColor="@color/satark_btn_secondary_border"
+                            app:strokeWidth="1dp"
                             android:text="Emulator"
                             android:textAllCaps="false"
-                            android:textColor="@color/satark_navy"
-                            android:textSize="11sp" />
+                            android:textColor="@color/satark_btn_secondary_text"
+                            android:textSize="12sp"
+                            app:cornerRadius="10dp"
+                            app:icon="@drawable/ic_smartphone"
+                            app:iconGravity="textStart"
+                            app:iconPadding="6dp"
+                            app:iconSize="16dp"
+                            app:iconTint="@color/satark_icon_normal" />
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnPresetDefault"
                             android:layout_width="0dp"
-                            android:layout_height="36dp"
+                            android:layout_height="42dp"
                             android:layout_weight="1"
                             android:layout_marginStart="6dp"
-                            android:background="@drawable/bg_chip"
-                            android:text="Reset Default"
+                            android:backgroundTint="@color/satark_btn_secondary_bg"
+                            app:strokeColor="@color/satark_btn_secondary_border"
+                            app:strokeWidth="1dp"
+                            android:text="Reset"
                             android:textAllCaps="false"
-                            android:textColor="@color/satark_navy"
-                            android:textSize="11sp" />
+                            android:textColor="@color/satark_btn_secondary_text"
+                            android:textSize="12sp"
+                            app:cornerRadius="10dp"
+                            app:icon="@drawable/ic_restore"
+                            app:iconGravity="textStart"
+                            app:iconPadding="6dp"
+                            app:iconSize="16dp"
+                            app:iconTint="@color/satark_icon_normal" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -513,31 +596,45 @@
                         android:layout_marginTop="14dp"
                         android:orientation="horizontal">
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnTestServerConnection"
                             android:layout_width="0dp"
-                            android:layout_height="44dp"
+                            android:layout_height="46dp"
                             android:layout_weight="1"
                             android:layout_marginEnd="6dp"
-                            android:background="@drawable/bg_button_secondary"
-                            android:text="Test Connection"
+                            android:backgroundTint="@color/satark_btn_secondary_bg"
+                            app:strokeColor="@color/satark_btn_secondary_border"
+                            app:strokeWidth="1dp"
+                            android:text="Test"
                             android:textAllCaps="false"
-                            android:textColor="@color/satark_navy"
+                            android:textColor="@color/satark_btn_secondary_text"
                             android:textSize="13sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            app:cornerRadius="10dp"
+                            app:icon="@drawable/ic_refresh"
+                            app:iconGravity="textStart"
+                            app:iconPadding="8dp"
+                            app:iconSize="18dp"
+                            app:iconTint="@color/satark_icon_normal" />
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSaveServerUrl"
                             android:layout_width="0dp"
-                            android:layout_height="44dp"
+                            android:layout_height="46dp"
                             android:layout_weight="1"
                             android:layout_marginStart="6dp"
-                            android:background="@drawable/bg_button_teal"
-                            android:text="Save &amp; Apply"
+                            android:backgroundTint="@color/satark_btn_primary_bg"
+                            android:text="Save"
                             android:textAllCaps="false"
-                            android:textColor="@color/satark_white"
+                            android:textColor="@color/satark_btn_primary_text"
                             android:textSize="13sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            app:cornerRadius="10dp"
+                            app:icon="@drawable/ic_save"
+                            app:iconGravity="textStart"
+                            app:iconPadding="8dp"
+                            app:iconSize="18dp"
+                            app:iconTint="@color/satark_btn_primary_text" />
                     </LinearLayout>
 
                     <TextView
@@ -545,7 +642,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="Tap 'Test Connection' to check server reachability."
+                        android:text="Tap 'Test' to check server reachability."
                         android:textColor="@color/satark_text_muted"
                         android:textSize="11sp" />
                 </LinearLayout>
@@ -606,7 +703,8 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:contentDescription="Contacts"
-                android:src="@drawable/ic_contacts" />
+                android:src="@drawable/ic_contacts"
+                app:tint="@color/satark_teal" />
 
             <TextView
                 android:id="@+id/textTabContacts"
@@ -635,7 +733,8 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:contentDescription="History"
-                android:src="@drawable/ic_history" />
+                android:src="@drawable/ic_history"
+                app:tint="@color/satark_icon_normal" />
 
             <TextView
                 android:id="@+id/textTabHistory"
@@ -663,7 +762,8 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:contentDescription="Keypad"
-                android:src="@drawable/ic_dialpad" />
+                android:src="@drawable/ic_dialpad"
+                app:tint="@color/satark_icon_normal" />
 
             <TextView
                 android:id="@+id/textTabDialer"
@@ -691,7 +791,8 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:contentDescription="SIP Line"
-                android:src="@drawable/ic_settings" />
+                android:src="@drawable/ic_settings"
+                app:tint="@color/satark_icon_normal" />
 
             <TextView
                 android:id="@+id/textTabAccount"

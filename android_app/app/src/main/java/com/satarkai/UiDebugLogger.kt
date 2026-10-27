@@ -1,4 +1,4 @@
-package com.example.satarkai
+package com.satarkai
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -18,6 +18,7 @@ object UiDebugLogger {
         while (lines.size > MAX_LINES) {
             lines.removeFirst()
         }
+        android.util.Log.d("SatarkAI", message)
         listeners.forEach { it.invoke(line) }
     }
 

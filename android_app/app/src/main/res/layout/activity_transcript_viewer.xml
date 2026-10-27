@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/satark_bg"
@@ -21,7 +22,8 @@
             android:layout_height="40dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="Back"
-            android:src="@drawable/ic_back" />
+            android:src="@drawable/ic_back"
+            app:tint="@color/satark_icon_normal" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -94,7 +96,8 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:contentDescription="Threat Status"
-                        android:src="@drawable/ic_shield_alert" />
+                        android:src="@drawable/ic_shield_alert"
+                        app:tint="@color/satark_scam_red" />
 
                     <TextView
                         android:id="@+id/textThreatBannerTitle"
@@ -114,7 +117,7 @@
                     android:layout_marginTop="8dp"
                     android:lineSpacingExtra="2dp"
                     android:text="Impersonation of banking authority attempting urgent OTP theft. High risk indicators highlighted below in red."
-                    android:textColor="#7F1D1D"
+                    android:textColor="@color/satark_scam_banner_text"
                     android:textSize="13sp" />
 
                 <View
@@ -122,7 +125,7 @@
                     android:layout_height="1dp"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
-                    android:background="#FECACA" />
+                    android:background="@color/satark_scam_banner_border" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -156,19 +159,25 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <!-- Minimal text + Material Icon button -->
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/buttonReportCall"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_button_danger"
-                        android:paddingLeft="14dp"
-                        android:paddingTop="7dp"
-                        android:paddingRight="14dp"
-                        android:paddingBottom="7dp"
-                        android:text="🚨 Report Call as Scam"
-                        android:textColor="#FFFFFF"
+                        android:layout_height="40dp"
+                        android:backgroundTint="@color/satark_btn_danger_bg"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp"
+                        android:text="Report Scam"
+                        android:textAllCaps="false"
+                        android:textColor="@color/satark_btn_danger_text"
                         android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_flag"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/satark_btn_danger_text" />
 
                     <TextView
                         android:id="@+id/textReportStatus"
@@ -215,7 +224,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🛡️ Verified Evidence • Analyzed by SatarkAI IndicBERT"
+            android:text="Verified Evidence • Analyzed by SatarkAI IndicBERT"
             android:textColor="@color/satark_text_muted"
             android:textSize="11sp" />
     </LinearLayout>

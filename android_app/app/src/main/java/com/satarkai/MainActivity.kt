@@ -1,4 +1,4 @@
-package com.example.satarkai
+package com.satarkai
 
 import android.Manifest
 import android.content.Intent
@@ -17,7 +17,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
+import com.google.android.material.switchmaterial.SwitchMaterial
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,8 +53,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var iconTabDialer: ImageView
     private lateinit var iconTabAccount: ImageView
 
-    // Top Header Status
-    private lateinit var textHeaderSipStatus: TextView
+    // Header Status & Settings
+    private lateinit var imageHeaderSipStatus: ImageView
+    private lateinit var imageHeaderServerStatus: ImageView
+    private lateinit var switchDarkMode: SwitchMaterial
 
     // Contacts
     private lateinit var editSearchContacts: EditText
@@ -73,9 +77,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonRegister: Button
     private lateinit var textRegistrationStatus: TextView
 
-    // Header Server Status
-    private lateinit var textHeaderServerStatus: TextView
-
     // Backend Server Settings
     private lateinit var editServerUrl: EditText
     private lateinit var textServerStatusBadge: TextView
@@ -92,6 +93,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val prefs = getSharedPreferences("satark_app_prefs", MODE_PRIVATE)
+        val isDarkMode = prefs.getBoolean("is_dark_mode", false)
+        if (isDarkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -126,10 +135,20 @@ class MainActivity : AppCompatActivity() {
         iconTabDialer = findViewById(R.id.iconTabDialer)
         iconTabAccount = findViewById(R.id.iconTabAccount)
 
-        textHeaderSipStatus = findViewById(R.id.textHeaderSipStatus)
-        textHeaderServerStatus = findViewById(R.id.textHeaderServerStatus)
-        textHeaderServerStatus.setOnClickListener {
+        imageHeaderSipStatus = findViewById(R.id.imageHeaderSipStatus)
+        imageHeaderServerStatus = findViewById(R.id.imageHeaderServerStatus)
+        imageHeaderServerStatus.setOnClickListener {
             switchTab(3)
+        }
+        imageHeaderSipStatus.setOnClickListener {
+            switchTab(3)
+        }
+
+        switchDarkMode = findViewById(R.id.switchDarkMode)
+        val isDarkMode = getSharedPreferences("satark_app_prefs", MODE_PRIVATE).getBoolean("is_dark_mode", false)
+        switchDarkMode.isChecked = isDarkMode
+        switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
+            toggleThemeMode(isChecked)
         }
 
         editServerUrl = findViewById(R.id.editServerUrl)
@@ -155,7 +174,7 @@ class MainActivity : AppCompatActivity() {
         buttonRegister = findViewById(R.id.buttonRegister)
         textRegistrationStatus = findViewById(R.id.textRegistrationStatus)
 
-        textHeaderSipStatus.setOnClickListener {
+        imageHeaderSipStatus.setOnClickListener {
             switchTab(3) // Jump to SIP Account tab
         }
     }
@@ -170,8 +189,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun switchTab(tabIndex: Int) {
-        val activeColor = getColor(R.color.satark_teal)
-        val inactiveColor = getColor(R.color.satark_text_muted)
+        val activeColor = ContextCompat.getColor(this, R.color.satark_teal)
+        val inactiveColor = ContextCompat.getColor(this, R.color.satark_icon_normal)
 
         sectionContacts.visibility = if (tabIndex == 0) View.VISIBLE else View.GONE
         sectionHistory.visibility = if (tabIndex == 1) View.VISIBLE else View.GONE
@@ -230,7 +249,7 @@ class MainActivity : AppCompatActivity() {
             val textAvatar = itemView.findViewById<TextView>(R.id.textAvatar)
             val textName = itemView.findViewById<TextView>(R.id.textContactName)
             val textHandle = itemView.findViewById<TextView>(R.id.textContactHandle)
-            val textVerified = itemView.findViewById<TextView>(R.id.textVerifiedBadge)
+            val imageVerified = itemView.findViewById<ImageView>(R.id.imageVerifiedBadge)
             val buttonCall = itemView.findViewById<ImageButton>(R.id.buttonCallContact)
 
             textAvatar.text = contact.avatarInitials
@@ -240,7 +259,7 @@ class MainActivity : AppCompatActivity() {
 
             textName.text = contact.name
             textHandle.text = "${contact.handleOrPhone} • ${contact.roleOrType}"
-            textVerified.visibility = if (contact.isVerified) View.VISIBLE else View.GONE
+            imageVerified.visibility = if (contact.isVerified) View.VISIBLE else View.GONE
 
             val launchCall = View.OnClickListener {
                 startMonitoredCall(
@@ -310,19 +329,19 @@ class MainActivity : AppCompatActivity() {
             when (record.status) {
                 CallSecurityStatus.SCAM -> {
                     val pct = if (record.scamConfidence > 0) " (${(record.scamConfidence * 100).toInt()}%)" else ""
-                    textBadge.text = "🚨 SCAM$pct"
+                    textBadge.text = "SCAM$pct"
                     textBadge.setBackgroundResource(R.drawable.bg_badge_scam)
-                    textBadge.setTextColor(Color.parseColor("#DC2626"))
+                    textBadge.setTextColor(ContextCompat.getColor(this, R.color.satark_scam_red))
                 }
                 CallSecurityStatus.SAFE -> {
                     textBadge.text = "SAFE"
                     textBadge.setBackgroundResource(R.drawable.bg_badge_safe)
-                    textBadge.setTextColor(Color.parseColor("#10B981"))
+                    textBadge.setTextColor(ContextCompat.getColor(this, R.color.satark_safe_green))
                 }
                 CallSecurityStatus.UNVERIFIED -> {
                     textBadge.text = "UNVERIFIED"
                     textBadge.setBackgroundResource(R.drawable.bg_badge_neutral)
-                    textBadge.setTextColor(getColor(R.color.satark_text_muted))
+                    textBadge.setTextColor(ContextCompat.getColor(this, R.color.satark_text_muted))
                 }
             }
 
@@ -359,7 +378,7 @@ class MainActivity : AppCompatActivity() {
             startMonitoredCall(
                 destination = "sip:scam-test@sip.linphone.org",
                 name = "Suspicious Caller (+91 98765 43210)",
-                initials = "⚠️",
+                initials = "!",
                 isSimulatedScam = true
             )
         }
@@ -433,14 +452,16 @@ class MainActivity : AppCompatActivity() {
                     textServerStatusBadge.text = "Online"
                     textServerStatusBadge.setBackgroundResource(R.drawable.bg_badge_safe)
                     textServerStatusBadge.setTextColor(getColor(R.color.satark_safe_green))
-                    textHeaderServerStatus.text = "● Server Online"
-                    textHeaderServerStatus.setTextColor(getColor(R.color.satark_safe_green))
+                    imageHeaderServerStatus.setImageResource(R.drawable.ic_cloud_done)
+                    imageHeaderServerStatus.setColorFilter(getColor(R.color.satark_safe_green))
+                    imageHeaderServerStatus.setBackgroundResource(R.drawable.bg_badge_safe)
                 } else {
                     textServerStatusBadge.text = "Offline"
                     textServerStatusBadge.setBackgroundResource(R.drawable.bg_badge_scam)
                     textServerStatusBadge.setTextColor(getColor(R.color.satark_scam_red))
-                    textHeaderServerStatus.text = "● Server Offline"
-                    textHeaderServerStatus.setTextColor(getColor(R.color.satark_scam_red))
+                    imageHeaderServerStatus.setImageResource(R.drawable.ic_cloud_off)
+                    imageHeaderServerStatus.setColorFilter(getColor(R.color.satark_scam_red))
+                    imageHeaderServerStatus.setBackgroundResource(R.drawable.bg_badge_scam)
                 }
                 textServerDiagnostics.text = message
             }
@@ -469,15 +490,15 @@ class MainActivity : AppCompatActivity() {
     private fun updateRegistrationUi(status: String, isRegistered: Boolean) {
         textRegistrationStatus.text = status
         if (isRegistered) {
-            textHeaderSipStatus.text = "● Registered"
-            textHeaderSipStatus.setTextColor(getColor(R.color.satark_safe_green))
-            textHeaderSipStatus.setBackgroundResource(R.drawable.bg_badge_safe)
+            imageHeaderSipStatus.setImageResource(R.drawable.ic_check_circle)
+            imageHeaderSipStatus.setColorFilter(getColor(R.color.satark_safe_green))
+            imageHeaderSipStatus.setBackgroundResource(R.drawable.bg_badge_safe)
             textRegistrationStatus.setBackgroundResource(R.drawable.bg_badge_safe)
             textRegistrationStatus.setTextColor(getColor(R.color.satark_safe_green))
         } else {
-            textHeaderSipStatus.text = "● Unregistered"
-            textHeaderSipStatus.setTextColor(getColor(R.color.satark_teal))
-            textHeaderSipStatus.setBackgroundResource(R.drawable.bg_chip)
+            imageHeaderSipStatus.setImageResource(R.drawable.ic_cloud_off)
+            imageHeaderSipStatus.setColorFilter(getColor(R.color.satark_teal))
+            imageHeaderSipStatus.setBackgroundResource(R.drawable.bg_chip)
             textRegistrationStatus.setBackgroundResource(R.drawable.bg_badge_neutral)
             textRegistrationStatus.setTextColor(getColor(R.color.satark_text_secondary))
         }
@@ -498,6 +519,19 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         activityScope.cancel()
+    }
+
+    private fun toggleThemeMode(enableDark: Boolean) {
+        val prefs = getSharedPreferences("satark_app_prefs", MODE_PRIVATE)
+        val currentDark = prefs.getBoolean("is_dark_mode", false)
+        if (currentDark == enableDark) return
+        prefs.edit().putBoolean("is_dark_mode", enableDark).apply()
+
+        if (enableDark) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
     }
 
     private fun ensureAudioPermission() {
