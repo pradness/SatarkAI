@@ -242,6 +242,7 @@ def log_fraud_prediction(
     tag = f"{COLOR_RED}🚨 [FRAUD] SCAM{COLOR_RESET}" if is_scam else f"{COLOR_GREEN}✅ [FRAUD] SAFE{COLOR_RESET}"
     conf_pct = round(confidence * 100, 1)
     latency_ms = int(latency * 1000)
+    status_str = f"SAFE ({conf_pct}%)" if not is_scam else f"SCAM ({conf_pct}%)"
     print(
         f"{tag} ({conf_pct}%) [Safe: {safe_prob*100:.1f}% | Scam: {scam_prob*100:.1f}%] ({latency_ms}ms)",
         flush=True,
@@ -558,7 +559,6 @@ class ClassificationResult(tuple):
         self.latency = latency
 
 
-@app.post("/predict", response_model=PredictResponse)
 def classify_and_persist_transcript(
     call_id: str,
     text: str,
