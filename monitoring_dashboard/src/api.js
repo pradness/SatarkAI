@@ -1,4 +1,50 @@
-const API_BASE = (import.meta.env && import.meta.env.VITE_API_BASE) || '';
+const CUSTOM_BACKEND_KEY = 'satarkai_backend_url';
+
+export function getBackendUrl() {
+  const custom = localStorage.getItem(CUSTOM_BACKEND_KEY);
+  if (custom) return custom.replace(/\/+$/, '');
+  const envBase = (import.meta.env && import.meta.env.VITE_API_BASE) || '';
+  return envBase.replace(/\/+$/, '');
+}
+
+export function setBackendUrl(url) {
+  if (url && url.trim()) {
+    localStorage.setItem(CUSTOM_BACKEND_KEY, url.trim().replace(/\/+$/, ''));
+  } else {
+    localStorage.removeItem(CUSTOM_BACKEND_KEY);
+  }
+}
+
+export function resetBackendUrl() {
+  localStorage.removeItem(CUSTOM_BACKEND_KEY);
+}
+
+export async function checkBackendHealth(targetUrl = null) {
+  const base = targetUrl !== null ? targetUrl.replace(/\/+$/, '') : getBackendUrl();
+  const endpoint = `${base}/health`;
+  const startTime = Date.now();
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(endpoint, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: { 'Accept': 'application/json' },
+    });
+    clearTimeout(timeoutId);
+    const latency = Date.now() - startTime;
+    if (res.ok) {
+      return { online: true, latency, status: res.status };
+    }
+    return { online: false, latency, status: res.status, error: `HTTP ${res.status}` };
+  } catch (err) {
+    return {
+      online: false,
+      latency: Date.now() - startTime,
+      error: err.name === 'AbortError' ? 'Connection timed out (5s)' : (err.message || 'Network error / CORS unreachable'),
+    };
+  }
+}
 
 export function getAuthToken() {
   return localStorage.getItem('satarkai_jwt_token');
@@ -36,6 +82,7 @@ export function logout() {
 
 async function request(endpoint, options = {}) {
   const token = getAuthToken();
+  const base = getBackendUrl();
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
@@ -45,7 +92,7 @@ async function request(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(`${base}${endpoint}`, {
     ...options,
     headers,
   });

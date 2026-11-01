@@ -6,7 +6,10 @@ import {
   IconScale,
   IconLogout,
   IconMoon,
-  IconSun
+  IconSun,
+  IconCloudDone,
+  IconCloudOff,
+  IconSettings
 } from './Icons';
 
 export default function Navbar({
@@ -15,9 +18,12 @@ export default function Navbar({
   onTabChange,
   onLogout,
   isDarkMode,
-  onToggleDarkMode
+  onToggleDarkMode,
+  backendHealth,
+  onOpenBackendConfig
 }) {
   const isAdmin = user?.role === 'admin';
+  const isOnline = backendHealth?.online;
 
   return (
     <header className="cyber-header">
@@ -67,6 +73,18 @@ export default function Navbar({
       </nav>
 
       <div className="user-badge-bar">
+        {/* Backend Online / Offline Status Chip */}
+        <button
+          className={`status-chip ${isOnline ? 'online' : 'offline'}`}
+          onClick={onOpenBackendConfig}
+          title={isOnline ? `Backend Online (${backendHealth?.latency || 0}ms) — Click to configure` : `Backend Offline (${backendHealth?.error || 'unreachable'}) — Click to configure`}
+          type="button"
+        >
+          {isOnline ? <IconCloudDone size={15} /> : <IconCloudOff size={15} />}
+          <span>{isOnline ? 'Server Online' : 'Server Offline'}</span>
+          <IconSettings size={13} style={{ opacity: 0.7 }} />
+        </button>
+
         {/* Dark Mode Switch Button */}
         <button
           className="theme-toggle-btn"

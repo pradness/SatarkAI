@@ -1042,3 +1042,54 @@ a {
     padding: 1rem;
   }
 }
+
+/* Status Chip for Server Health */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--shape-corner-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.status-chip.online {
+  background-color: var(--satark-safe-container);
+  color: var(--satark-on-safe-container);
+  border-color: var(--satark-safe);
+}
+
+.status-chip.online:hover {
+  filter: brightness(0.95);
+}
+
+.status-chip.offline {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-color: var(--md-sys-color-error);
+  animation: pulse-offline 2s infinite ease-in-out;
+}
+
+.status-chip.offline:hover {
+  filter: brightness(0.95);
+}
+
+@keyframes pulse-offline {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getCurrentUser, getAuthToken, logout, getStats, getInvestigationCalls } from './api';
+import { getCurrentUser, getAuthToken, logout, getStats, getInvestigationCalls, checkBackendHealth } from './api';
 import LoginModal from './components/LoginModal';
 import Navbar from './components/Navbar';
 import KpiStats from './components/KpiStats';
@@ -7,6 +7,8 @@ import IncidentsList from './components/IncidentsList';
 import TranscriptDrawer from './components/TranscriptDrawer';
 import UsersDirectory from './components/UsersDirectory';
 import AdminClearance from './components/AdminClearance';
+import BackendConfigModal from './components/BackendConfigModal';
+import { IconCloudOff, IconSettings, IconRefreshCw } from './components/Icons';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(getCurrentUser());
@@ -18,6 +20,21 @@ export default function App() {
     if (saved) return saved === 'dark';
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
+
+  // Backend Health & Configuration
+  const [backendHealth, setBackendHealth] = useState({ online: true, latency: 0 });
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+
+  const verifyHealth = async () => {
+    const health = await checkBackendHealth();
+    setBackendHealth(health);
+  };
+
+  useEffect(() => {
+    verifyHealth();
+    const interval = setInterval(verifyHealth, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -50,6 +67,7 @@ export default function App() {
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     setToken(getAuthToken());
+    verifyHealth();
   };
 
   const handleLogout = () => {
@@ -63,9 +81,12 @@ export default function App() {
     try {
       const data = await getStats();
       setStats(data);
+      setBackendHealth((prev) => ({ ...prev, online: true }));
     } catch (err) {
       if (err.status === 401 || err.status === 403) {
         handleLogout();
+      } else {
+        verifyHealth();
       }
     }
   };
@@ -87,6 +108,8 @@ export default function App() {
     } catch (err) {
       if (err.status === 401 || err.status === 403) {
         handleLogout();
+      } else {
+        verifyHealth();
       }
     } finally {
       setLoadingCalls(false);
@@ -103,11 +126,20 @@ export default function App() {
   // If not logged in, show secure login modal
   if (!token || !currentUser) {
     return (
-      <LoginModal
-        onLoginSuccess={handleLoginSuccess}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
-      />
+      <>
+        <LoginModal
+          onLoginSuccess={handleLoginSuccess}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
+          backendHealth={backendHealth}
+          onOpenBackendConfig={() => setIsConfigOpen(true)}
+        />
+        <BackendConfigModal
+          isOpen={isConfigOpen}
+          onClose={() => setIsConfigOpen(false)}
+          onHealthChange={(health) => setBackendHealth(health)}
+        />
+      </>
     );
   }
 
@@ -127,9 +159,38 @@ export default function App() {
         onLogout={handleLogout}
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
+        backendHealth={backendHealth}
+        onOpenBackendConfig={() => setIsConfigOpen(true)}
       />
 
       <main className="main-wrapper">
+        {/* Offline Alert Strip when Backend is unreachable */}
+        {!backendHealth.online && (
+          <div
+            className="alert-error"
+            style={{
+              marginBottom: '1.25rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'pointer',
+            }}
+            onClick={() => setIsConfigOpen(true)}
+            title="Click to configure backend connection"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <IconCloudOff size={18} />
+              <div>
+                <strong>Backend Server Offline:</strong> Unable to communicate with the FastAPI server ({backendHealth.error || 'Connection refused'}). Live call events and data cannot sync.
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'underline' }}>
+              <IconSettings size={14} />
+              <span>Configure URL</span>
+            </div>
+          </div>
+        )}
+
         {/* KPI Stats Overview */}
         <KpiStats stats={stats} />
 
@@ -168,6 +229,13 @@ export default function App() {
           onClose={() => setSelectedCallId(null)}
         />
       )}
+
+      {/* Backend API Configuration Modal */}
+      <BackendConfigModal
+        isOpen={isConfigOpen}
+        onClose={() => setIsConfigOpen(false)}
+        onHealthChange={(health) => setBackendHealth(health)}
+      />
     </div>
   );
 }

@@ -5,10 +5,19 @@ import {
   IconAlertTriangle,
   IconCheckCircle,
   IconMoon,
-  IconSun
+  IconSun,
+  IconCloudDone,
+  IconCloudOff,
+  IconSettings
 } from './Icons';
 
-export default function LoginModal({ onLoginSuccess, isDarkMode, onToggleDarkMode }) {
+export default function LoginModal({
+  onLoginSuccess,
+  isDarkMode,
+  onToggleDarkMode,
+  backendHealth,
+  onOpenBackendConfig
+}) {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('officer.sharma@cyberpolice.gov.in');
   const [password, setPassword] = useState('Investigator@2026');
@@ -24,6 +33,8 @@ export default function LoginModal({ onLoginSuccess, isDarkMode, onToggleDarkMod
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
+  const isOnline = backendHealth?.online;
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
@@ -34,7 +45,11 @@ export default function LoginModal({ onLoginSuccess, isDarkMode, onToggleDarkMod
       const res = await loginProfessional(email, password);
       onLoginSuccess(res.user);
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      if (!isOnline) {
+        setError(`Backend is offline or unreachable (${backendHealth?.error || 'Connection failed'}). Click "Server Offline" above to configure your FastAPI backend URL.`);
+      } else {
+        setError(err.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }
@@ -66,8 +81,20 @@ export default function LoginModal({ onLoginSuccess, isDarkMode, onToggleDarkMod
   return (
     <div className="login-wrap">
       <div className="login-card">
-        {onToggleDarkMode && (
-          <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem' }}>
+        <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {/* Backend Status indicator */}
+          <button
+            className={`status-chip ${isOnline ? 'online' : 'offline'}`}
+            onClick={onOpenBackendConfig}
+            title={isOnline ? `Backend Online (${backendHealth?.latency || 0}ms)` : `Backend Offline (${backendHealth?.error || 'unreachable'}). Click to configure.`}
+            type="button"
+          >
+            {isOnline ? <IconCloudDone size={14} /> : <IconCloudOff size={14} />}
+            <span>{isOnline ? 'Online' : 'Offline'}</span>
+            <IconSettings size={12} style={{ opacity: 0.7 }} />
+          </button>
+
+          {onToggleDarkMode && (
             <button
               className="theme-toggle-btn"
               onClick={onToggleDarkMode}
@@ -77,8 +104,8 @@ export default function LoginModal({ onLoginSuccess, isDarkMode, onToggleDarkMod
             >
               {isDarkMode ? <IconSun size={18} /> : <IconMoon size={18} />}
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="login-header">
           <img
@@ -93,9 +120,27 @@ export default function LoginModal({ onLoginSuccess, isDarkMode, onToggleDarkMod
           </p>
         </div>
 
+        {/* Offline Warning Banner */}
+        {!isOnline && (
+          <div
+            className="alert-error"
+            style={{
+              cursor: 'pointer',
+              marginBottom: '1.25rem',
+            }}
+            onClick={onOpenBackendConfig}
+            title="Click to configure backend URL"
+          >
+            <IconCloudOff size={18} style={{ flexShrink: 0 }} />
+            <div style={{ fontSize: '0.78rem' }}>
+              <strong>Backend Server is Offline:</strong> Unable to connect to API ({backendHealth?.error || 'Connection refused'}). <u style={{ fontWeight: 600 }}>Click to configure Backend URL</u>.
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="alert-error">
-            <IconAlertTriangle size={18} />
+            <IconAlertTriangle size={18} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}
@@ -109,7 +154,7 @@ export default function LoginModal({ onLoginSuccess, isDarkMode, onToggleDarkMod
               color: 'var(--satark-on-safe-container)',
             }}
           >
-            <IconCheckCircle size={18} />
+            <IconCheckCircle size={18} style={{ flexShrink: 0 }} />
             <span>{successMsg}</span>
           </div>
         )}
