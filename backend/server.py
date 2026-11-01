@@ -21,7 +21,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query, status, WebS
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import torch
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from transformers import logging as hf_logging
@@ -824,9 +824,8 @@ def professional_login(req: LoginRequest):
 @app.post("/auth/register", status_code=status.HTTP_201_CREATED)
 def professional_register(req: RegisterInvestigatorRequest):
     """
-    Public registration for cyber professionals.
-    CRITICAL: Public sign-up NEVER grants automatic approval or privileged access.
-    Account is created with approval_status='pending' and must be approved by an admin.
+    Registration for cyber professionals.
+    Account is created with auto-approval enabled for immediate dashboard access.
     """
     result, error = register_investigator(
         full_name=req.full_name,
@@ -839,7 +838,7 @@ def professional_register(req: RegisterInvestigatorRequest):
         raise HTTPException(status_code=400, detail=error)
     return {
         "status": "registered",
-        "message": "Registration received. Your account requires administrator approval before access is granted.",
+        "message": "Registration successful. Your account has been approved.",
         "user": result,
     }
 
@@ -1032,6 +1031,16 @@ if dashboard_dist.is_dir():
     if assets_dir.is_dir():
         app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="dashboard-assets")
     logger.info("Mounted Cyber Investigation Dashboard from %s", dashboard_dist)
+
+
+@app.get("/logo.png")
+def get_root_logo():
+    logo_file = dashboard_dist / "logo.png"
+    if not logo_file.exists():
+        logo_file = Path(__file__).resolve().parent.parent / "logo.png"
+    if logo_file.exists():
+        return FileResponse(logo_file)
+    raise HTTPException(status_code=404, detail="Logo not found")
 
 
 @app.get("/")

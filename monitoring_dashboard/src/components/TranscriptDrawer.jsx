@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { getCallDetails, getCallTranscripts } from '../api';
+import {
+  IconShield,
+  IconX,
+  IconClock,
+  IconLock,
+  IconAlertOctagon,
+  IconAlertTriangle,
+  IconScale
+} from './Icons';
 
 export default function TranscriptDrawer({ callId, onClose }) {
   const [call, setCall] = useState(null);
@@ -57,35 +66,37 @@ export default function TranscriptDrawer({ callId, onClose }) {
         <div className="drawer-header">
           <div className="drawer-title-area">
             <div className="drawer-title">
-              <span>🛡️ Evidence Docket:</span>
-              <span style={{ color: 'var(--text-primary)' }}>{call?.caller_name || 'Call Investigation'}</span>
+              <IconShield size={18} />
+              <span>Evidence Docket:</span>
+              <span style={{ color: 'var(--md-sys-color-primary)' }}>{call?.caller_name || 'Call Investigation'}</span>
             </div>
             <div className="drawer-call-id">
               Session ID: <code>{callId}</code>
             </div>
           </div>
-          <button className="btn-close" onClick={onClose}>
-            ✕
+          <button className="btn-close" onClick={onClose} aria-label="Close drawer">
+            <IconX size={18} />
           </button>
         </div>
 
         {loading ? (
           <div className="empty-state" style={{ marginTop: '3rem' }}>
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⏳</div>
+            <IconClock size={32} />
             <div>Retrieving authenticated forensic records & IndicBERT cues...</div>
           </div>
         ) : privacyBlocked ? (
           <div className="privacy-enforcement-banner">
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🔒</div>
+            <IconLock size={48} style={{ color: 'var(--md-sys-color-error)', marginBottom: '0.75rem' }} />
             <h4>STATUTORY TRANSCRIPT PRIVACY ENFORCEMENT</h4>
             <p>{error}</p>
-            <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
               SatarkAI strictly enforces that only calls automatically flagged by the ML model or manually reported by citizens are subject to audio transcript inspection.
             </div>
           </div>
         ) : error ? (
           <div className="alert-error" style={{ margin: '1.5rem' }}>
-            ⚠️ {error}
+            <IconAlertTriangle size={18} />
+            <span>{error}</span>
           </div>
         ) : (
           <>
@@ -94,13 +105,14 @@ export default function TranscriptDrawer({ callId, onClose }) {
               {/* Scam Detection Summary */}
               {call?.is_flagged && (
                 <div className="evidence-banner scam">
-                  <div className="evidence-title scam">
-                    <span>🛑</span> ML Vishing Detection (IndicBERT)
+                  <div className="evidence-title">
+                    <IconAlertOctagon size={16} />
+                    <span>ML Vishing Detection (IndicBERT)</span>
                   </div>
                   <div className="evidence-text">
                     <strong>Threat Summary:</strong> {call?.threat_summary || 'Vishing cues flagged in dialogue.'}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--scam-red-dark)', display: 'flex', gap: '1rem', fontWeight: 500 }}>
+                  <div style={{ fontSize: '0.75rem', display: 'flex', gap: '1rem', fontWeight: 500, opacity: 0.9 }}>
                     <span>Confidence: <strong>{Math.round((call?.scam_confidence || 0) * 100)}%</strong></span>
                     <span>Flagged Cues: <strong>{call?.scam_segment_count || 0} segments</strong></span>
                     <span>Timing: <strong>{call?.timestamp_formatted} ({call?.duration_formatted})</strong></span>
@@ -111,18 +123,19 @@ export default function TranscriptDrawer({ callId, onClose }) {
               {/* Citizen Report Summary */}
               {call?.is_reported && (
                 <div className="evidence-banner reported">
-                  <div className="evidence-title reported">
-                    <span>⚠️</span> Citizen Suspicious Call Report
+                  <div className="evidence-title">
+                    <IconAlertTriangle size={16} />
+                    <span>Citizen Suspicious Call Report</span>
                   </div>
                   <div className="evidence-text">
                     <strong>Reported Reason:</strong> {call?.report_details?.reason || call?.threat_summary || 'Reported as suspicious'}
                   </div>
                   {call?.report_details?.description && (
-                    <div className="evidence-text" style={{ fontStyle: 'italic', color: 'var(--text-secondary)' }}>
+                    <div className="evidence-text" style={{ fontStyle: 'italic', opacity: 0.9 }}>
                       " {call?.report_details?.description} "
                     </div>
                   )}
-                  <div style={{ fontSize: '0.75rem', color: 'var(--warning-amber-text)', display: 'flex', gap: '1rem', marginTop: '0.2rem', fontWeight: 500 }}>
+                  <div style={{ fontSize: '0.75rem', display: 'flex', gap: '1rem', marginTop: '0.2rem', fontWeight: 500, opacity: 0.9 }}>
                     <span>Reported By: <strong>{call?.report_details?.reported_by || call?.user_id}</strong></span>
                     <span>Reported At: <strong>{call?.report_details?.reported_at || 'Recent'}</strong></span>
                   </div>
@@ -130,12 +143,12 @@ export default function TranscriptDrawer({ callId, onClose }) {
               )}
             </div>
 
-            {/* Conversation Header */}
-            <div style={{ padding: '0.65rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                WhatsApp-Style Audio Transcript Stream
+            {/* Conversation Subheader */}
+            <div style={{ padding: '0.65rem 1.5rem', background: 'var(--md-sys-color-surface-container)', borderBottom: '1px solid var(--md-sys-color-outline-variant)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Audio Transcript Stream
               </span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', fontWeight: 600 }}>
                 {transcripts.length} segments recorded
               </span>
             </div>
@@ -167,7 +180,7 @@ export default function TranscriptDrawer({ callId, onClose }) {
                       >
                         {!isUser && (
                           <div className="chat-speaker-header">
-                            {isScam ? '⚠️ SUSPICIOUS CALLER' : (call?.caller_name || 'Caller')}
+                            {isScam ? 'SUSPICIOUS CALLER' : (call?.caller_name || 'Caller')}
                           </div>
                         )}
 
@@ -175,10 +188,10 @@ export default function TranscriptDrawer({ callId, onClose }) {
                           {seg.text}
                         </div>
 
-                        {/* Highlighted Scam Cue Explanation (in Red) */}
+                        {/* Highlighted Scam Cue Explanation */}
                         {isScam && (
                           <div className="threat-explanation-tag">
-                            <span>🚨</span>
+                            <IconAlertOctagon size={14} style={{ color: 'var(--md-sys-color-error)', flexShrink: 0 }} />
                             <span>{seg.threat_reason || 'Flagged by IndicBERT as Vishing / Coercion Cue'}</span>
                           </div>
                         )}
@@ -195,8 +208,11 @@ export default function TranscriptDrawer({ callId, onClose }) {
             </div>
 
             {/* Footer */}
-            <div style={{ padding: '0.75rem 1.25rem', background: 'var(--bg-card)', borderTop: '1px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>⚖️ Chain-of-Custody Cryptographic Hash Verified</span>
+            <div style={{ padding: '0.75rem 1.25rem', background: 'var(--md-sys-color-surface-container)', borderTop: '1px solid var(--md-sys-color-outline-variant)', fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <IconScale size={14} />
+                <span>Chain-of-Custody Cryptographic Hash Verified</span>
+              </div>
               <span>SatarkAI IndicBERT Forensics Engine</span>
             </div>
           </>

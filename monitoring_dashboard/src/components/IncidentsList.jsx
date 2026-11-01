@@ -1,4 +1,15 @@
 import React from 'react';
+import {
+  IconFileText,
+  IconAlertOctagon,
+  IconAlertTriangle,
+  IconFlame,
+  IconSearch,
+  IconPhoneIncoming,
+  IconPhoneOutgoing,
+  IconClock,
+  IconShield
+} from './Icons';
 
 export default function IncidentsList({
   calls,
@@ -21,31 +32,35 @@ export default function IncidentsList({
             className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
             onClick={() => onFilterChange('all')}
           >
-            📋 All Incidents
+            <IconFileText size={15} />
+            <span>All Incidents</span>
           </button>
           <button
             className={`filter-btn ${filterType === 'flagged' ? 'active scam' : ''}`}
             onClick={() => onFilterChange('flagged')}
           >
-            🛑 AI Flagged Only
+            <IconAlertOctagon size={15} />
+            <span>AI Flagged Only</span>
           </button>
           <button
             className={`filter-btn ${filterType === 'reported' ? 'active reported' : ''}`}
             onClick={() => onFilterChange('reported')}
           >
-            ⚠️ User Reported Only
+            <IconAlertTriangle size={15} />
+            <span>Citizen Reported Only</span>
           </button>
           <button
             className={`filter-btn ${filterType === 'both' ? 'active both' : ''}`}
             onClick={() => onFilterChange('both')}
           >
-            🔥 Dual Flagged & Reported
+            <IconFlame size={15} />
+            <span>Dual Flagged & Reported</span>
           </button>
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <div className="search-box">
-            <span style={{ marginRight: '0.4rem', color: 'var(--text-muted)' }}>🔍</span>
+            <IconSearch size={16} />
             <input
               type="text"
               placeholder="Search caller, number, session..."
@@ -68,13 +83,13 @@ export default function IncidentsList({
 
       {loading ? (
         <div className="empty-state">
-          <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⏳</div>
+          <IconClock size={32} />
           <div>Loading authenticated forensic incident registry from MongoDB...</div>
         </div>
       ) : calls.length === 0 ? (
         <div className="empty-state">
-          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🛡️</div>
-          <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>
+          <IconShield size={40} />
+          <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--md-sys-color-on-surface)' }}>
             No calls matching current investigative criteria
           </div>
           <div style={{ fontSize: '0.825rem', marginTop: '0.25rem' }}>
@@ -103,11 +118,11 @@ export default function IncidentsList({
                     <span className="caller-handle">{c.caller_number}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.2rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      User: <strong style={{ color: 'var(--accent-blue)' }}>{c.user_id}</strong>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                      User: <strong style={{ color: 'var(--md-sys-color-primary)' }}>{c.user_id}</strong>
                     </span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>•</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>•</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', fontFamily: 'var(--font-mono)' }}>
                       ID: {c.call_id}
                     </span>
                   </div>
@@ -117,22 +132,25 @@ export default function IncidentsList({
                 <div>
                   {isBoth && (
                     <span className="incident-classification-badge badge-both">
-                      🔥 AI FLAGGED & REPORTED
+                      <IconFlame size={14} />
+                      <span>AI FLAGGED & REPORTED</span>
                     </span>
                   )}
                   {isScamOnly && (
                     <span className="incident-classification-badge badge-scam-only">
-                      🛑 AI DETECTED VISHING
+                      <IconAlertOctagon size={14} />
+                      <span>AI DETECTED VISHING</span>
                     </span>
                   )}
                   {isReportedOnly && (
                     <span className="incident-classification-badge badge-reported-only">
-                      ⚠️ CITIZEN REPORTED
+                      <IconAlertTriangle size={14} />
+                      <span>CITIZEN REPORTED</span>
                     </span>
                   )}
 
                   {c.threat_summary && (
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '320px' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '320px' }}>
                       {c.threat_summary}
                     </div>
                   )}
@@ -141,18 +159,21 @@ export default function IncidentsList({
                 {/* 3. Scam Probability Meter */}
                 <div className="confidence-meter">
                   <div className="confidence-val">
-                    Threat Risk: <span style={{ color: confPct >= 70 ? 'var(--scam-red)' : 'var(--warning-amber)' }}>{confPct}%</span>
+                    Threat Risk:{' '}
+                    <span style={{ color: confPct >= 70 ? 'var(--md-sys-color-error)' : 'var(--satark-warning)' }}>
+                      {confPct}%
+                    </span>
                   </div>
                   <div className="meter-bar">
                     <div
                       className="meter-fill"
                       style={{
                         width: `${confPct}%`,
-                        background: confPct >= 70 ? 'var(--scam-red)' : 'var(--warning-amber)',
+                        backgroundColor: confPct >= 70 ? 'var(--md-sys-color-error)' : 'var(--satark-warning)',
                       }}
                     />
                   </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
                     {c.scam_segment_count || 0} flagged lines
                   </div>
                 </div>
@@ -160,8 +181,14 @@ export default function IncidentsList({
                 {/* 4. Session Timing */}
                 <div className="session-meta">
                   <div className="time">{c.timestamp_formatted || 'Recent'}</div>
-                  <div>Duration: {c.duration_formatted || '0s'}</div>
-                  <div>{c.is_incoming ? 'Incoming Call' : 'Outgoing Call'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <IconClock size={12} />
+                    <span>Duration: {c.duration_formatted || '0s'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    {c.is_incoming ? <IconPhoneIncoming size={12} /> : <IconPhoneOutgoing size={12} />}
+                    <span>{c.is_incoming ? 'Incoming Call' : 'Outgoing Call'}</span>
+                  </div>
                 </div>
 
                 {/* 5. Action Button */}
@@ -173,7 +200,8 @@ export default function IncidentsList({
                       onSelectCall(c.call_id);
                     }}
                   >
-                    <span>📜</span> View Transcript
+                    <IconFileText size={14} />
+                    <span>View Transcript</span>
                   </button>
                 </div>
               </div>

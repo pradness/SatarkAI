@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
+import logoImg from '../assets/logo.png';
 import { loginProfessional, registerProfessional } from '../api';
+import {
+  IconAlertTriangle,
+  IconCheckCircle,
+  IconMoon,
+  IconSun
+} from './Icons';
 
-export default function LoginModal({ onLoginSuccess }) {
+export default function LoginModal({ onLoginSuccess, isDarkMode, onToggleDarkMode }) {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('officer.sharma@cyberpolice.gov.in');
   const [password, setPassword] = useState('Investigator@2026');
@@ -59,18 +66,51 @@ export default function LoginModal({ onLoginSuccess }) {
   return (
     <div className="login-wrap">
       <div className="login-card">
+        {onToggleDarkMode && (
+          <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem' }}>
+            <button
+              className="theme-toggle-btn"
+              onClick={onToggleDarkMode}
+              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle dark mode"
+              type="button"
+            >
+              {isDarkMode ? <IconSun size={18} /> : <IconMoon size={18} />}
+            </button>
+          </div>
+        )}
+
         <div className="login-header">
-          <div className="login-shield">🛡️</div>
-          <h2>SatarkAI Cyber Intelligence</h2>
+          <img
+            src={logoImg}
+            alt="SatarkAI"
+            className="app-logo-rounded"
+            style={{ width: '56px', height: '56px', marginBottom: '0.5rem' }}
+          />
+          <h2>SatarkAI Cyber Forensics</h2>
           <p className="brand-subtitle" style={{ marginTop: '0.25rem' }}>
-            Law Enforcement & Cyber-Professional Portal
+            Law Enforcement & Cyber-Defense Portal
           </p>
         </div>
 
-        {error && <div className="alert-error">⚠️ {error}</div>}
+        {error && (
+          <div className="alert-error">
+            <IconAlertTriangle size={18} />
+            <span>{error}</span>
+          </div>
+        )}
+
         {successMsg && (
-          <div className="alert-error" style={{ background: 'var(--safe-green-bg)', borderColor: 'var(--safe-green-border)', color: '#6ee7b7' }}>
-            ✅ {successMsg}
+          <div
+            className="alert-error"
+            style={{
+              backgroundColor: 'var(--satark-safe-container)',
+              borderColor: 'var(--satark-safe)',
+              color: 'var(--satark-on-safe-container)',
+            }}
+          >
+            <IconCheckCircle size={18} />
+            <span>{successMsg}</span>
           </div>
         )}
 
@@ -96,31 +136,27 @@ export default function LoginModal({ onLoginSuccess }) {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
+                placeholder="Password"
               />
             </div>
 
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Authenticating...' : 'Secure Investigator Login'}
+            <button
+              type="submit"
+              className="btn-primary-action"
+              disabled={loading}
+            >
+              {loading ? 'Authenticating...' : 'Sign In with Security Clearance'}
             </button>
 
-            <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Need clearance? </span>
+            <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.8rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+              New Officer on Duty?{' '}
               <button
                 type="button"
+                style={{ background: 'none', border: 'none', color: 'var(--md-sys-color-primary)', fontWeight: 600, cursor: 'pointer' }}
                 onClick={() => { setIsRegister(true); setError(null); }}
-                style={{ background: 'none', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: 600 }}
               >
-                Apply for Professional Access
+                Register Clearance
               </button>
-            </div>
-
-            <div className="demo-credentials-box">
-              <div style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-                Pre-Authorized Official Credentials:
-              </div>
-              <div>Investigator: <code>officer.sharma@cyberpolice.gov.in</code> / <code>Investigator@2026</code></div>
-              <div style={{ marginTop: '0.2rem' }}>Cyber Admin: <code>commander.satark@cyberpolice.gov.in</code> / <code>CyberOfficer@2026</code></div>
             </div>
           </form>
         ) : (
@@ -133,31 +169,43 @@ export default function LoginModal({ onLoginSuccess }) {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Inspector Rajesh Kumar"
+                placeholder="Insp. Rajesh Kumar"
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Official Gov / Police Email</label>
+              <label className="form-label">Official Department Email</label>
               <input
                 type="email"
                 className="form-input"
                 required
                 value={regEmail}
                 onChange={(e) => setRegEmail(e.target.value)}
-                placeholder="rajesh.kumar@cyberpolice.gov.in"
+                placeholder="rajesh.kumar@cybercell.gov.in"
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Official Badge / Service ID</label>
+              <label className="form-label">Create Clearance Password</label>
+              <input
+                type="password"
+                className="form-input"
+                required
+                value={regPassword}
+                onChange={(e) => setRegPassword(e.target.value)}
+                placeholder="Min 8 characters"
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Badge ID / Service Number</label>
               <input
                 type="text"
                 className="form-input"
                 required
                 value={badgeId}
                 onChange={(e) => setBadgeId(e.target.value)}
-                placeholder="CYBER-DELHI-5541"
+                placeholder="e.g. DL-CYBER-8841"
               />
             </div>
 
@@ -166,36 +214,28 @@ export default function LoginModal({ onLoginSuccess }) {
               <input
                 type="text"
                 className="form-input"
+                required
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                placeholder="Financial Fraud & Vishing Wing"
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Set Password (min 8 characters)</label>
-              <input
-                type="password"
-                className="form-input"
-                required
-                minLength={8}
-                value={regPassword}
-                onChange={(e) => setRegPassword(e.target.value)}
-                placeholder="••••••••••••"
-              />
-            </div>
-
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Submitting Application...' : 'Submit Clearance Request'}
+            <button
+              type="submit"
+              className="btn-primary-action"
+              disabled={loading}
+            >
+              {loading ? 'Submitting...' : 'Register Clearance'}
             </button>
 
-            <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.8rem' }}>
+            <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.8rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+              Already registered?{' '}
               <button
                 type="button"
+                style={{ background: 'none', border: 'none', color: 'var(--md-sys-color-primary)', fontWeight: 600, cursor: 'pointer' }}
                 onClick={() => { setIsRegister(false); setError(null); }}
-                style={{ background: 'none', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: 600 }}
               >
-                Back to Sign In
+                Sign In
               </button>
             </div>
           </form>

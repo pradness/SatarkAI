@@ -12,6 +12,26 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(getCurrentUser());
   const [token, setToken] = useState(getAuthToken());
 
+  // Dark Mode State
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('satark_dashboard_theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.setAttribute('data-theme', 'dark');
+      localStorage.setItem('satark_dashboard_theme', 'dark');
+    } else {
+      root.setAttribute('data-theme', 'light');
+      localStorage.setItem('satark_dashboard_theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => setIsDarkMode((prev) => !prev);
+
   // Views & Tabs
   const [activeTab, setActiveTab] = useState('incidents'); // 'incidents' | 'users' | 'admin'
   const [selectedCallId, setSelectedCallId] = useState(null);
@@ -82,7 +102,13 @@ export default function App() {
 
   // If not logged in, show secure login modal
   if (!token || !currentUser) {
-    return <LoginModal onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <LoginModal
+        onLoginSuccess={handleLoginSuccess}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
+      />
+    );
   }
 
   return (
@@ -99,6 +125,8 @@ export default function App() {
           }
         }}
         onLogout={handleLogout}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
       />
 
       <main className="main-wrapper">

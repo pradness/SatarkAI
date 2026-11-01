@@ -1,5 +1,9 @@
 # SatarkAI (सतर्क AI)
 
+<p align="center">
+  <img src="logo.png" alt="SatarkAI Logo" width="180" />
+</p>
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-green.svg)](https://fastapi.tiangolo.com/)
@@ -13,18 +17,18 @@ It combines native Android telephony (Linphone SIP), hardware-accelerated end-to
 
 ---
 
-## ⚡ Key Highlights
+## Key Highlights
 
 - **Real-Time Encrypted Streaming**: Audio frames (100ms chunks) captured from phone calls are hardware-encrypted with **AES-GCM (256-bit)** before streaming over bi-directional WebSockets.
 - **Bilingual Hinglish Telephony ASR**: Powered by `Oriserve/Whisper-Hindi2Hinglish-Apex`, optimized for Indian accents, noisy telephone codecs, and mixed Hindi-English speech with **sub-250ms latency** on NVIDIA GPUs.
 - **Context-Aware Scam Detection**: Utilizes `suyog17/indica-vishing-model` (IndicBERT) evaluated over a rolling conversational dialogue history to accurately detect urgency, banking fraud, and credential extraction cues.
-- **Clean Audio Pipeline**: Automatic 3:1 integer decimation (48,000 Hz $\rightarrow$ 16,000 Hz), hardware echo cancellation via `AudioSource.VOICE_COMMUNICATION`, and zero-repeat streaming guards.
+- **Clean Audio Pipeline**: Automatic 3:1 integer decimation (48,000 Hz -> 16,000 Hz), hardware echo cancellation via `AudioSource.VOICE_COMMUNICATION`, and zero-repeat streaming guards.
 - **Live In-Call Warnings**: Dynamic call screen heads-up display alerting users with instant **SCAM DETECTED** banners, threat confidence scores, and real-time live transcript bubbles.
 - **Developer & Forensics Tools**: Selective CLI flags for host speaker playback (`--playback`), minimal transcript logging (`--transcript`), fraud output (`--fraud`), and an interactive React web dashboard.
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 flowchart TD
@@ -70,7 +74,7 @@ flowchart TD
 
 ---
 
-## 🔄 Live Call Processing Flow
+## Live Call Processing Flow
 
 ```mermaid
 sequenceDiagram
@@ -102,10 +106,11 @@ sequenceDiagram
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 SatarkAI/
+├── logo.png                       # Official project brand logo
 ├── backend/                       # Python FastAPI Backend & AI Services
 │   ├── audio_crypto.py            # AES-GCM 256-bit audio encryption & decryption
 │   ├── audio_playback.py          # Host speaker playback engine (aplay / pw-play)
@@ -140,7 +145,7 @@ SatarkAI/
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
 ### 1. Prerequisites
 
@@ -230,10 +235,10 @@ Expected startup console banner:
 
 ```text
 ========================================================================
-  🚀 SatarkAI Call Intelligence Server [Device: cuda]
-  🔊 Playback   : ENABLED (--playback)
-  🎙️ Transcript : ENABLED (--transcript)
-  🤖 Fraud Logs : ENABLED (--fraud)
+  SatarkAI Call Intelligence Server [Device: cuda]
+  Playback   : ENABLED (--playback)
+  Transcript : ENABLED (--transcript)
+  Fraud Logs : ENABLED (--fraud)
 ========================================================================
 ```
 
@@ -281,15 +286,15 @@ npm run dev
 
 ---
 
-## 📊 Live Output Preview
+## Live Output Preview
 
 When a call is active and someone is speaking, the backend prints clean, single-line logs:
 
 ```text
-🎙️ [TRANSCRIPT] [REMOTE] "Hello, main bank verification department se bol raha hoon." (198ms)
-🚨 [FRAUD] SCAM (99.8%) [Safe: 0.2% | Scam: 99.8%] (5ms)
-🎙️ [TRANSCRIPT] [REMOTE] "Aapka debit card block ho gaya hai, turant 6-digit OTP share karein." (205ms)
-🚨 [FRAUD] SCAM (99.9%) [Safe: 0.1% | Scam: 99.9%] (5ms)
+[TRANSCRIPT] [REMOTE] "Hello, main bank verification department se bol raha hoon." (198ms)
+[FRAUD] SCAM (99.8%) [Safe: 0.2% | Scam: 99.8%] (5ms)
+[TRANSCRIPT] [REMOTE] "Aapka debit card block ho gaya hai, turant 6-digit OTP share karein." (205ms)
+[FRAUD] SCAM (99.9%) [Safe: 0.1% | Scam: 99.9%] (5ms)
 ```
 
 At the exact same time, the citizen's phone displays:
@@ -299,7 +304,7 @@ At the exact same time, the citizen's phone displays:
 
 ---
 
-## 🛠️ Testing & Verification
+## Testing & Verification
 
 You can verify the ASR and NLP pipeline directly without an active call using the built-in test suite:
 
@@ -314,7 +319,7 @@ This runs synthetic PCM audio and benchmark audio through:
 
 ---
 
-## 🔒 Security & Privacy
+## Security & Privacy
 
 - **No Plaintext Audio Storage**: Audio chunks are processed in-memory in rolling 100ms buffers and immediately freed after transcription.
 - **End-to-End Encryption**: Android clients derive session keys via SHA-256 and encrypt all audio frames with **AES-GCM** before sending them across the wire.
@@ -322,6 +327,6 @@ This runs synthetic PCM audio and benchmark audio through:
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).

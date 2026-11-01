@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { getMonitoredUsers, getUserProfile } from '../api';
+import {
+  IconUsers,
+  IconSearch,
+  IconFileText,
+  IconClock,
+  IconAlertOctagon,
+  IconAlertTriangle,
+  IconX
+} from './Icons';
 
 export default function UsersDirectory({ onSelectCallForTranscript }) {
   const [users, setUsers] = useState([]);
@@ -43,16 +52,17 @@ export default function UsersDirectory({ onSelectCallForTranscript }) {
     <div>
       <div className="controls-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
-            👥 Monitored Citizen Registry
+          <IconUsers size={20} style={{ color: 'var(--md-sys-color-primary)' }} />
+          <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--md-sys-color-on-surface)' }}>
+            Monitored Citizen Registry
           </span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
             ({users.length} registered callers)
           </span>
         </div>
 
         <div className="search-box">
-          <span style={{ marginRight: '0.4rem', color: 'var(--text-muted)' }}>🔍</span>
+          <IconSearch size={16} />
           <input
             type="text"
             placeholder="Search by user ID or handle..."
@@ -64,10 +74,11 @@ export default function UsersDirectory({ onSelectCallForTranscript }) {
 
       {loading ? (
         <div className="empty-state">
+          <IconClock size={32} />
           <div>Loading monitored citizens from MongoDB...</div>
         </div>
       ) : (
-        <div style={{ background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+        <div style={{ backgroundColor: 'var(--md-sys-color-surface)', borderRadius: '16px', border: '1px solid var(--md-sys-color-outline-variant)', overflow: 'hidden', boxShadow: 'var(--shadow-elevation-1)' }}>
           <table className="users-table">
             <thead>
               <tr>
@@ -84,49 +95,49 @@ export default function UsersDirectory({ onSelectCallForTranscript }) {
               {users.map((u) => (
                 <tr key={u.user_id}>
                   <td>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    <div style={{ fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>{u.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', fontFamily: 'var(--font-mono)' }}>
                       ID: {u.user_id}
                     </div>
                   </td>
-                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--accent-blue)' }}>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--md-sys-color-primary)' }}>
                     {u.handle_or_phone}
                   </td>
                   <td>
                     <strong>{u.total_calls}</strong>
                   </td>
                   <td>
-                    <span style={{ color: u.flagged_calls > 0 ? 'var(--scam-red)' : 'var(--text-muted)', fontWeight: 600 }}>
+                    <span style={{ color: u.flagged_calls > 0 ? 'var(--md-sys-color-error)' : 'var(--md-sys-color-on-surface-variant)', fontWeight: 600 }}>
                       {u.flagged_calls}
                     </span>
                   </td>
                   <td>
-                    <span style={{ color: u.reported_calls > 0 ? 'var(--warning-amber)' : 'var(--text-muted)', fontWeight: 600 }}>
+                    <span style={{ color: u.reported_calls > 0 ? 'var(--satark-warning)' : 'var(--md-sys-color-on-surface-variant)', fontWeight: 600 }}>
                       {u.reported_calls}
                     </span>
                   </td>
                   <td>
                     <span
                       style={{
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '4px',
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '9999px',
                         fontSize: '0.75rem',
                         fontWeight: 700,
-                        background: u.actionable_calls > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.05)',
-                        color: u.actionable_calls > 0 ? 'var(--scam-red)' : 'var(--text-muted)',
-                        border: u.actionable_calls > 0 ? '1px solid var(--scam-red-border)' : '1px solid var(--border-color)',
+                        backgroundColor: u.actionable_incidents > 0 ? 'var(--md-sys-color-error-container)' : 'var(--md-sys-color-surface-container-high)',
+                        color: u.actionable_incidents > 0 ? 'var(--md-sys-color-on-error-container)' : 'var(--md-sys-color-on-surface-variant)',
                       }}
                     >
-                      {u.actionable_calls} {u.actionable_calls === 1 ? 'Incident' : 'Incidents'}
+                      {u.actionable_incidents} actionable
                     </span>
                   </td>
                   <td>
                     <button
                       className="btn-open-transcript"
+                      style={{ padding: '0.35rem 0.8rem', fontSize: '0.75rem' }}
                       onClick={() => handleSelectUser(u.user_id)}
-                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
                     >
-                      Inspect Profile 🔍
+                      <IconFileText size={13} />
+                      <span>Investigate History</span>
                     </button>
                   </td>
                 </tr>
@@ -136,138 +147,118 @@ export default function UsersDirectory({ onSelectCallForTranscript }) {
         </div>
       )}
 
-      {/* User Profile Drawer */}
+      {/* User Profile Modal */}
       {selectedUser && (
         <div className="modal-overlay" onClick={() => setSelectedUser(null)}>
-          <div className="transcript-drawer" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="transcript-drawer"
+            style={{ maxWidth: '640px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="drawer-header">
               <div className="drawer-title-area">
                 <div className="drawer-title">
-                  <span>👤 Monitored Profile:</span>
-                  <span style={{ color: 'var(--text-primary)' }}>{userProfile?.name || userProfile?.user?.name || selectedUser}</span>
+                  <IconUsers size={18} />
+                  <span>Citizen Forensic Profile:</span>
+                  <span style={{ color: 'var(--md-sys-color-primary)' }}>{userProfile?.user?.name || selectedUser}</span>
                 </div>
                 <div className="drawer-call-id">
-                  Subscriber ID: <code>{selectedUser}</code> • SIP: {userProfile?.handle_or_phone || userProfile?.user?.handle_or_phone}
+                  SIP Handle: {userProfile?.user?.handle_or_phone || selectedUser}
                 </div>
               </div>
-              <button className="btn-close" onClick={() => setSelectedUser(null)}>
-                ✕
+              <button className="btn-close" onClick={() => setSelectedUser(null)} aria-label="Close modal">
+                <IconX size={18} />
               </button>
             </div>
 
-            {profileLoading ? (
-              <div className="empty-state">
-                <div>Retrieving subscriber telemetry & history...</div>
-              </div>
-            ) : userProfile ? (
-              <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
-                {/* Stats Breakdown */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                  <div style={{ background: 'var(--bg-card)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>TOTAL CALLS</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{userProfile.stats?.total_calls || 0}</div>
-                  </div>
-                  <div style={{ background: 'var(--bg-card)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--scam-red)' }}>AI FLAGGED</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--scam-red)' }}>{userProfile.stats?.total_flagged || userProfile.stats?.flagged || 0}</div>
-                  </div>
-                  <div style={{ background: 'var(--bg-card)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--warning-amber)' }}>REPORTED</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--warning-amber)' }}>{userProfile.stats?.total_reported || userProfile.stats?.reported || 0}</div>
-                  </div>
-                  <div style={{ background: 'var(--bg-card)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--safe-green)' }}>NORMAL / SAFE</div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--safe-green)' }}>{userProfile.stats?.normal_calls || userProfile.stats?.normal || 0}</div>
-                  </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
+              {profileLoading ? (
+                <div className="empty-state">
+                  <IconClock size={32} />
+                  <div>Loading user investigation dossier...</div>
                 </div>
-
-                {/* Privacy Warning Banner */}
-                <div style={{ background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.25)', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.75rem', color: '#93c5fd', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span>🔒</span>
-                  <span>
-                    <strong>Statutory Privacy Notice:</strong> Full transcript audio access is legally permitted ONLY for calls that are flagged or reported. Normal verified calls expose non-content metadata only.
-                  </span>
-                </div>
-
-                {/* Calls History Table */}
-                {(() => {
-                  const callList = userProfile.call_history || userProfile.all_calls || [];
-                  return (
-                    <>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
-                        Call Activity Log ({callList.length} records)
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div
+                    style={{
+                      background: 'var(--md-sys-color-surface-container)',
+                      padding: '1rem',
+                      borderRadius: '12px',
+                      border: '1px solid var(--md-sys-color-outline-variant)',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(3, 1fr)',
+                      gap: '0.5rem',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>Total Monitored</div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{userProfile?.user?.total_calls || 0}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>AI Flagged</div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--md-sys-color-error)' }}>
+                        {userProfile?.user?.flagged_calls || 0}
                       </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>User Reported</div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--satark-warning)' }}>
+                        {userProfile?.user?.reported_calls || 0}
+                      </div>
+                    </div>
+                  </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        {callList.map((c) => {
-                          const isPermitted = c.has_transcript_access || c.is_actionable || c.is_flagged || c.is_reported;
-                          return (
-                            <div
-                              key={c.call_id}
-                              style={{
-                                background: 'var(--bg-card)',
-                                border: isPermitted ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid var(--border-color)',
-                                borderRadius: '8px',
-                                padding: '0.85rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                              }}
-                            >
-                              <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <strong style={{ fontSize: '0.85rem' }}>{c.caller_name}</strong>
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                                    ({c.caller_number})
-                                  </span>
-                                  {c.is_flagged && (
-                                    <span className="incident-classification-badge badge-scam-only" style={{ padding: '0.1rem 0.35rem', fontSize: '0.65rem' }}>
-                                      FLAGGED
-                                    </span>
-                                  )}
-                                  {c.is_reported && (
-                                    <span className="incident-classification-badge badge-reported-only" style={{ padding: '0.1rem 0.35rem', fontSize: '0.65rem' }}>
-                                      REPORTED
-                                    </span>
-                                  )}
-                                  {!c.is_flagged && !c.is_reported && (
-                                    <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.35rem', borderRadius: '4px', background: 'var(--safe-green-bg)', color: 'var(--safe-green)', border: '1px solid var(--safe-green-border)' }}>
-                                      SAFE
-                                    </span>
-                                  )}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                                  {c.timestamp_formatted} • Duration: {c.duration_formatted}
-                                </div>
-                              </div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginTop: '0.5rem', color: 'var(--md-sys-color-on-surface)' }}>
+                    Actionable Threat Calls for this Citizen:
+                  </h4>
 
-                              <div>
-                                {isPermitted ? (
-                                  <button
-                                    className="btn-open-transcript"
-                                    onClick={() => {
-                                      setSelectedUser(null);
-                                      onSelectCallForTranscript(c.call_id);
-                                    }}
-                                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
-                                  >
-                                    📜 Transcript
-                                  </button>
-                                ) : (
-                                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', padding: '0.3rem 0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
-                                    🔒 Metadata Only
-                                  </span>
-                                )}
-                              </div>
+                  {userProfile?.actionable_calls?.length === 0 ? (
+                    <div className="empty-state" style={{ padding: '1.5rem' }}>
+                      <div>No active threats recorded against this citizen account.</div>
+                    </div>
+                  ) : (
+                    userProfile?.actionable_calls?.map((c) => (
+                      <div
+                        key={c.call_id}
+                        style={{
+                          background: 'var(--md-sys-color-surface)',
+                          border: '1px solid var(--md-sys-color-outline-variant)',
+                          borderRadius: '12px',
+                          padding: '0.85rem 1rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{c.caller_name || 'Suspicious Caller'}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                            {c.caller_number} • {c.timestamp_formatted}
+                          </div>
+                          {c.threat_summary && (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-error)', marginTop: '0.2rem' }}>
+                              {c.threat_summary}
                             </div>
-                          );
-                        })}
+                          )}
+                        </div>
+                        <button
+                          className="btn-open-transcript"
+                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+                          onClick={() => {
+                            setSelectedUser(null);
+                            onSelectCallForTranscript(c.call_id);
+                          }}
+                        >
+                          <IconFileText size={13} />
+                          <span>Transcript</span>
+                        </button>
                       </div>
-                    </>
-                  );
-                })()}
-              </div>
-            ) : null}
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

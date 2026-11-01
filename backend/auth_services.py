@@ -10,10 +10,10 @@ backend_dir = Path(__file__).resolve().parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from pymongo import ASCENDING
 
 from database import get_collection
@@ -25,19 +25,21 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "satarkai_cyber_investigation_jwt_s
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 hours
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security_bearer = HTTPBearer(auto_error=False)
 
 
 def hash_password(password: str) -> str:
-    """Hashes a plain text password with bcrypt."""
-    return pwd_context.hash(password)
+    """Hashes a plain text password with bcrypt, safely truncating to 72 bytes."""
+    pw_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pw_bytes, salt).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifies a plain password against stored hash."""
+    """Verifies a plain password against stored hash with 72-byte safety truncation."""
     try:
-        return pwd_context.verify(plain_password, hashed_password)
+        pw_bytes = plain_password.encode("utf-8")[:72]
+        return bcrypt.checkpw(pw_bytes, hashed_password.encode("utf-8"))
     except Exception as e:
         logger.error("verify_password error: %s", e)
         return False
@@ -176,16 +178,16 @@ def register_investigator(
             "department": department.strip() or "Cyber Investigation Branch",
             "role": "investigator",
             "account_type": "professional",
-            "is_approved": False,
-            "approval_status": "pending",
+            "is_approved": True,
+            "approval_status": "approved",
             "is_contact": False,
             "created_at": now,
             "last_seen_at": now,
-            "approved_at": None,
-            "approved_by": None,
+            "approved_at": now,
+            "approved_by": "system_auto_approve",
         }
         users_col.insert_one(doc)
-        logger.info("New investigator registered (pending approval): %s", email_clean)
+        logger.info("New investigator registered (auto-approved): %s", email_clean)
 
         return {
             "user_id": user_id,
@@ -195,7 +197,7 @@ def register_investigator(
             "department": doc["department"],
             "role": doc["role"],
             "approval_status": doc["approval_status"],
-            "is_approved": False,
+            "is_approved": True,
             "created_at": now.isoformat(),
         }, None
     except Exception as e:

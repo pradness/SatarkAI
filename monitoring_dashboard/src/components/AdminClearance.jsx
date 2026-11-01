@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { getInvestigatorsList, updateInvestigatorStatus } from '../api';
+import {
+  IconScale,
+  IconClock,
+  IconCheckCircle,
+  IconAlertTriangle
+} from './Icons';
 
 export default function AdminClearance() {
   const [investigators, setInvestigators] = useState([]);
@@ -39,10 +45,11 @@ export default function AdminClearance() {
     <div>
       <div className="controls-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
-            ⚖️ Investigator Security Clearance Administration
+          <IconScale size={20} style={{ color: 'var(--md-sys-color-primary)' }} />
+          <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--md-sys-color-on-surface)' }}>
+            Investigator Security Clearance Administration
           </span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
             ({investigators.length} personnel registered)
           </span>
         </div>
@@ -58,25 +65,40 @@ export default function AdminClearance() {
             className={`filter-btn ${statusFilter === 'pending' ? 'active reported' : ''}`}
             onClick={() => setStatusFilter('pending')}
           >
-            Pending Review ⏳
+            <IconClock size={14} />
+            <span>Pending Review</span>
           </button>
           <button
             className={`filter-btn ${statusFilter === 'approved' ? 'active' : ''}`}
             onClick={() => setStatusFilter('approved')}
           >
-            Approved Officers ✅
+            <IconCheckCircle size={14} />
+            <span>Approved Officers</span>
           </button>
         </div>
       </div>
 
       {actionMsg && (
-        <div className="alert-error" style={{ background: 'var(--safe-green-bg)', borderColor: 'var(--safe-green-border)', color: '#6ee7b7' }}>
-          ✅ {actionMsg}
+        <div
+          className="alert-error"
+          style={{
+            backgroundColor: 'var(--satark-safe-container)',
+            borderColor: 'var(--satark-safe)',
+            color: 'var(--satark-on-safe-container)',
+          }}
+        >
+          <IconCheckCircle size={16} />
+          <span>{actionMsg}</span>
         </div>
       )}
-      {error && <div className="alert-error">⚠️ {error}</div>}
+      {error && (
+        <div className="alert-error">
+          <IconAlertTriangle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
 
-      <div style={{ background: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+      <div style={{ backgroundColor: 'var(--md-sys-color-surface)', borderRadius: '16px', border: '1px solid var(--md-sys-color-outline-variant)', overflow: 'hidden', boxShadow: 'var(--shadow-elevation-1)' }}>
         <table className="users-table">
           <thead>
             <tr>
@@ -98,103 +120,101 @@ export default function AdminClearance() {
               </tr>
             ) : investigators.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                  No investigators found for this clearance status.
+                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                  No investigator accounts matching filter.
                 </td>
               </tr>
             ) : (
-              investigators.map((inv) => {
-                const isApproved = inv.approval_status === 'approved';
-                const isPending = inv.approval_status === 'pending';
-                const isRejected = inv.approval_status === 'rejected';
-
-                return (
-                  <tr key={inv.user_id}>
-                    <td>
-                      <strong style={{ color: 'var(--text-primary)' }}>{inv.name}</strong>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                        {inv.user_id}
-                      </div>
-                    </td>
-                    <td style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>{inv.email}</td>
-                    <td>
-                      <span className="badge-id">{inv.badge_id || 'CYBER-UNASSIGNED'}</span>
-                    </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{inv.department}</td>
-                    <td style={{ fontSize: '0.8rem', fontWeight: 600, color: inv.role === 'admin' ? 'var(--accent-cyan)' : 'var(--text-primary)' }}>
+              investigators.map((inv) => (
+                <tr key={inv._id || inv.email}>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{inv.name}</div>
+                  </td>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{inv.email}</td>
+                  <td>
+                    <span className="badge-id">{inv.badge_id || 'N/A'}</span>
+                  </td>
+                  <td style={{ color: 'var(--md-sys-color-on-surface-variant)', fontSize: '0.8rem' }}>
+                    {inv.department || 'Cyber Cell'}
+                  </td>
+                  <td>
+                    <span
+                      style={{
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '4px',
+                        fontSize: '0.725rem',
+                        fontWeight: 700,
+                        backgroundColor: inv.role === 'admin' ? 'var(--satark-purple-container)' : 'var(--md-sys-color-secondary-container)',
+                        color: inv.role === 'admin' ? 'var(--satark-on-purple-container)' : 'var(--md-sys-color-on-secondary-container)',
+                      }}
+                    >
                       {inv.role?.toUpperCase()}
-                    </td>
-                    <td>
-                      <span
-                        style={{
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '4px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          background: isApproved
-                            ? 'var(--safe-green-bg)'
-                            : isPending
-                            ? 'var(--warning-amber-bg)'
-                            : 'var(--scam-red-bg)',
-                          color: isApproved
-                            ? 'var(--safe-green)'
-                            : isPending
-                            ? 'var(--warning-amber)'
-                            : 'var(--scam-red)',
-                          border: `1px solid ${
-                            isApproved
-                              ? 'var(--safe-green-border)'
-                              : isPending
-                              ? 'var(--warning-amber-border)'
-                              : 'var(--scam-red-border)'
-                          }`,
-                        }}
-                      >
-                        {inv.approval_status?.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      {isPending ? (
-                        <div style={{ display: 'flex', gap: '0.4rem' }}>
-                          <button
-                            onClick={() => handleUpdateStatus(inv.user_id, 'approved')}
-                            style={{
-                              background: 'var(--safe-green-bg)',
-                              border: '1px solid var(--safe-green-border)',
-                              color: 'var(--safe-green)',
-                              padding: '0.3rem 0.6rem',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                            }}
-                          >
-                            Approve Clearance
-                          </button>
-                          <button
-                            onClick={() => handleUpdateStatus(inv.user_id, 'rejected')}
-                            style={{
-                              background: 'var(--scam-red-bg)',
-                              border: '1px solid var(--scam-red-border)',
-                              color: 'var(--scam-red)',
-                              padding: '0.3rem 0.6rem',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '0.75rem',
-                            }}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {isApproved ? 'Clearance Active' : 'Access Denied'}
-                        </span>
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      style={{
+                        padding: '0.25rem 0.65rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        backgroundColor:
+                          inv.status === 'approved'
+                            ? 'var(--satark-safe-container)'
+                            : inv.status === 'pending'
+                            ? 'var(--satark-warning-container)'
+                            : 'var(--md-sys-color-error-container)',
+                        color:
+                          inv.status === 'approved'
+                            ? 'var(--satark-on-safe-container)'
+                            : inv.status === 'pending'
+                            ? 'var(--satark-on-warning-container)'
+                            : 'var(--md-sys-color-on-error-container)',
+                      }}
+                    >
+                      {inv.status?.toUpperCase() || 'PENDING'}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      {inv.status !== 'approved' && (
+                        <button
+                          style={{
+                            backgroundColor: 'var(--satark-safe)',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => handleUpdateStatus(inv.user_id || inv._id, 'approved')}
+                        >
+                          Approve
+                        </button>
                       )}
-                    </td>
-                  </tr>
-                );
-              })
+                      {inv.status !== 'rejected' && (
+                        <button
+                          style={{
+                            backgroundColor: 'var(--md-sys-color-error)',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => handleUpdateStatus(inv.user_id || inv._id, 'rejected')}
+                        >
+                          Revoke
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

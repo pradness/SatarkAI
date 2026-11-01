@@ -37,6 +37,7 @@ class InCallActivity : AppCompatActivity() {
     private var callRecordFinalized = false
 
     private lateinit var rootLayout: View
+    private lateinit var statusBadgeContainer: LinearLayout
     private lateinit var statusBadge: TextView
     private lateinit var avatarLabel: TextView
     private lateinit var remoteLabel: TextView
@@ -127,6 +128,7 @@ class InCallActivity : AppCompatActivity() {
         setContentView(R.layout.activity_in_call)
 
         rootLayout = findViewById(R.id.rootCallingLayout)
+        statusBadgeContainer = findViewById(R.id.layoutStatusBadgeContainer)
         statusBadge = findViewById(R.id.textStatusBadge)
         avatarLabel = findViewById(R.id.textCallerAvatar)
         remoteLabel = findViewById(R.id.textRemoteParty)
@@ -305,7 +307,7 @@ class InCallActivity : AppCompatActivity() {
         rootLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.satark_call_screen_scam_bg))
 
         statusBadge.text = "SCAM DETECTED"
-        statusBadge.setBackgroundResource(R.drawable.bg_badge_scam)
+        statusBadgeContainer.setBackgroundResource(R.drawable.bg_badge_scam)
         statusBadge.setTextColor(ContextCompat.getColor(this, R.color.satark_scam_red))
 
         scamWarningCard.visibility = View.VISIBLE
@@ -325,7 +327,7 @@ class InCallActivity : AppCompatActivity() {
         rootLayout.setBackgroundColor(getColor(R.color.satark_call_screen_bg))
 
         statusBadge.text = "Protected by SatarkAI"
-        statusBadge.setBackgroundResource(R.drawable.bg_chip)
+        statusBadgeContainer.setBackgroundResource(R.drawable.bg_chip)
         statusBadge.setTextColor(getColor(R.color.satark_teal))
 
         scamWarningCard.visibility = View.GONE
