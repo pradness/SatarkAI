@@ -11,6 +11,7 @@ indic-transliteration
 python-jose[cryptography]
 passlib[bcrypt]
 bcrypt
+cryptography
 dnspython
 soundfile
 accelerate

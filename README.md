@@ -1,7 +1,7 @@
 # SatarkAI (सतर्क AI)
 
 <p align="center">
-  <img src="logo.png" alt="SatarkAI Logo" width="180" />
+  <img src="logo.png" alt="SatarkAI Logo" width="180" style="border-radius: 24px;" />
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,22 +9,22 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-green.svg)](https://fastapi.tiangolo.com/)
 [![Whisper ASR](https://img.shields.io/badge/ASR-Whisper--Hindi2Hinglish-orange.svg)](https://huggingface.co/Oriserve/Whisper-Hindi2Hinglish-Apex)
 [![IndicBERT](https://img.shields.io/badge/NLP-IndicBERT--Vishing-red.svg)](https://huggingface.co/suyog17/indica-vishing-model)
-[![Android](https://img.shields.io/badge/Android-API%2026+-brightgreen.svg)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-Jetpack%20Compose%20%7C%20M3-brightgreen.svg)](https://developer.android.com)
 
-**SatarkAI** is an end-to-end, real-time AI security platform designed to detect and prevent voice phishing (**vishing**) scams during live phone calls. 
+**SatarkAI** is an end-to-end, real-time AI security platform engineered to detect and prevent voice phishing (**vishing**) scams during live telephone conversations.
 
-It combines native Android telephony (Linphone SIP), hardware-accelerated end-to-end encrypted audio streaming (AES-GCM), GPU-accelerated Hinglish speech recognition (Whisper), context-aware NLP threat classification (IndicBERT), and a real-time forensics dashboard.
+The system pairs a modern **Android application built with Jetpack Compose & Material 3** (Linphone SIP VoIP, AES-GCM 256-bit hardware-accelerated encryption) with a **high-throughput FastAPI inference server** (GPU-accelerated bilingual Hinglish Whisper ASR, context-aware IndicBERT classification) and a **React-based Cyber Forensics Investigation Dashboard**.
 
 ---
 
 ## Key Highlights
 
-- **Real-Time Encrypted Streaming**: Audio frames (100ms chunks) captured from phone calls are hardware-encrypted with **AES-GCM (256-bit)** before streaming over bi-directional WebSockets.
-- **Bilingual Hinglish Telephony ASR**: Powered by `Oriserve/Whisper-Hindi2Hinglish-Apex`, optimized for Indian accents, noisy telephone codecs, and mixed Hindi-English speech with **sub-250ms latency** on NVIDIA GPUs.
-- **Context-Aware Scam Detection**: Utilizes `suyog17/indica-vishing-model` (IndicBERT) evaluated over a rolling conversational dialogue history to accurately detect urgency, banking fraud, and credential extraction cues.
-- **Clean Audio Pipeline**: Automatic 3:1 integer decimation (48,000 Hz -> 16,000 Hz), hardware echo cancellation via `AudioSource.VOICE_COMMUNICATION`, and zero-repeat streaming guards.
-- **Live In-Call Warnings**: Dynamic call screen heads-up display alerting users with instant **SCAM DETECTED** banners, threat confidence scores, and real-time live transcript bubbles.
-- **Developer & Forensics Tools**: Selective CLI flags for host speaker playback (`--playback`), minimal transcript logging (`--transcript`), fraud output (`--fraud`), and an interactive React web dashboard.
+- **Real-Time Encrypted Telephony**: 100ms PCM audio frames captured from SIP phone calls are encrypted on-device via **AES-GCM (256-bit)** using hardware-backed keystores before streaming over bi-directional WebSockets.
+- **Bilingual Hinglish Telephony ASR**: Powered by `Oriserve/Whisper-Hindi2Hinglish-Apex`, tailored for Indian accents, noisy telephone codecs, and mixed Hindi-English speech with **sub-250ms latency** on NVIDIA GPUs (with INT8 CPU fallback).
+- **Context-Aware Scam Detection**: Employs `suyog17/indica-vishing-model` (IndicBERT) evaluated over a rolling conversational dialogue history to accurately detect urgency, banking coercion, and credential extraction.
+- **Clean Audio Pipeline**: Automatic 3:1 integer decimation (48,000 Hz to 16,000 Hz), hardware acoustic echo cancellation via `AudioSource.VOICE_COMMUNICATION`, and zero-repeat streaming guards.
+- **Pixel-Native Android App**: Entirely migrated to **Jetpack Compose** with **Material 3**, Monet dynamic theming on Android 12+, clean brand fallbacks for Android 11 and lower, dark/light theme switching, and live heads-up in-call threat warnings.
+- **Forensics Investigation Dashboard**: Modern Material 3-styled web application deployed with automated GitHub Pages workflows (`satarkai.me`), complete with live server health diagnostics and dynamic FastAPI endpoint switching.
 
 ---
 
@@ -32,7 +32,7 @@ It combines native Android telephony (Linphone SIP), hardware-accelerated end-to
 
 ```mermaid
 flowchart TD
-    subgraph AndroidClient["Android Client (SatarkAI App)"]
+    subgraph AndroidClient["Android Client (Jetpack Compose & Material 3)"]
         Linphone["Linphone SIP Engine (Calls & 48kHz Decoded PCM)"]
         LocalMic["Hardware Mic (AudioSource.VOICE_COMMUNICATION)"]
         Capture["AudioCaptureManager (3:1 Decimation to 16kHz)"]
@@ -92,7 +92,7 @@ sequenceDiagram
     loop Real-time Audio Stream (100ms Chunks)
         User->>User: Downsample 48kHz to 16kHz & Encrypt AES-GCM
         User->>WS: Binary Frame [Channel, TS, IV, Ciphertext]
-        WS->>Playback: Stream Remote Caller Audio to Laptop Speakers
+        WS->>Playback: Stream Remote Caller Audio to Host Speakers
     end
 
     Note over WS,Whisper: Speech pause detected (>400ms silence)
@@ -111,61 +111,83 @@ sequenceDiagram
 ```text
 SatarkAI/
 ├── logo.png                       # Official project brand logo
+├── docker-compose.yml             # MongoDB local container definition
+├── .env.example                   # Environment configuration template
+│
 ├── backend/                       # Python FastAPI Backend & AI Services
 │   ├── audio_crypto.py            # AES-GCM 256-bit audio encryption & decryption
 │   ├── audio_playback.py          # Host speaker playback engine (aplay / pw-play)
 │   ├── whisper_service.py         # Whisper ASR model loader, VAD buffer & deduplication
 │   ├── server.py                  # Core FastAPI server, WebSockets & REST APIs
-│   ├── database.py                # MongoDB connection & indexes
+│   ├── database.py                # MongoDB connection & collection handlers
 │   ├── db_services.py             # Database CRUD for calls, transcripts, contacts
-│   ├── auth_services.py           # JWT authentication & investigator access
+│   ├── auth_services.py           # JWT authentication & officer access clearance
+│   ├── start_tunnel.sh            # Universal tunnel script (Cloudflare / Localtunnel)
 │   ├── requirements.txt           # Python package dependencies
-│   └── test_whisper_pipeline.py   # Benchmark test script for Whisper & IndicBERT
+│   ├── test_whisper_pipeline.py   # Benchmark test script for Whisper & IndicBERT
+│   ├── test_api_endpoints.py      # REST & health endpoint unit tests
+│   ├── test_investigation_endpoints.py # Forensics & investigation API tests
+│   └── test_mongo.py              # MongoDB integration test suite
 │
 ├── android_app/                   # Android Native Client Application (Kotlin)
 │   ├── app/src/main/java/com/satarkai/
+│   │   ├── MainActivity.kt        # Jetpack Compose UI (Contacts, Recents, Keypad, SIP)
+│   │   ├── InCallActivity.kt      # Dynamic call UI with real-time scam threat cards
 │   │   ├── AudioCaptureManager.kt # 48kHz Linphone recording decimation & mic capture
 │   │   ├── AudioCryptoManager.kt  # Android KeyStore & AES-GCM frame encryptor
 │   │   ├── AudioWebSocketClient.kt# Bi-directional WebSocket streaming client
 │   │   ├── LinphoneManager.kt     # SIP VoIP call management (Linphone SDK)
-│   │   ├── InCallActivity.kt      # Dynamic call UI with real-time scam threat cards
-│   │   ├── ServerConfigManager.kt # Dynamic server IP/port discovery
-│   │   └── MainActivity.kt        # Dialer, contact list, and call history
+│   │   ├── ServerConfigManager.kt # Dynamic server IP/port discovery & health checks
+│   │   ├── theme/                 # Material 3 theme & dynamic Monet color palettes
+│   │   └── ui/                    # MainScreen Compose tabs & components
 │   └── build.gradle               # Android Gradle configuration
 │
-├── monitoring_dashboard/          # Cyber Investigator Forensics Dashboard (React)
-│   ├── src/                       # React components, threat visualizers & logs
+├── monitoring_dashboard/          # Cyber Investigator Forensics Dashboard (React / Vite)
+│   ├── src/                       # React components, threat visualizers & M3 design
 │   ├── package.json               # Node.js dependencies
-│   └── vite.config.js             # Vite frontend build configuration
+│   ├── vite.config.js             # Vite frontend build configuration
+│   └── public/                    # Static assets & CNAME
 │
-├── docker-compose.yml             # MongoDB container definition
-├── .env.example                   # Environment configuration template
-└── README.md                      # Project documentation
+└── .github/workflows/             # CI/CD Workflows
+    └── deploy-dashboard.yml       # Automated GitHub Pages deployment to satarkai.me
 ```
 
 ---
 
 ## Quickstart Guide
 
-### 1. Prerequisites
+Follow these simple steps to get the full stack up and running from a fresh clone.
 
-- **OS**: Linux (Ubuntu 22.04+ recommended) or macOS / Windows with WSL2
-- **Python**: 3.10 or 3.11
-- **Docker**: For MongoDB (`docker` and `docker compose`)
-- **Android SDK**: Android Studio with Android SDK 26+ (for building the app)
-- **GPU (Recommended)**: NVIDIA GPU with CUDA 12+ (Fallback to INT8 CPU supported)
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/pradness/SatarkAI.git
+cd SatarkAI
+```
 
 ---
 
-### 2. Start MongoDB
+### 2. Configure Environment
 
-Run the local MongoDB container:
+Copy the example environment configuration to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+If using a local MongoDB instance, the default `MONGODB_URI=mongodb://127.0.0.1:27017/satarkai_db` works out of the box. If using MongoDB Atlas, update the connection URI in `.env`.
+
+---
+
+### 3. Start MongoDB (Optional if using MongoDB Atlas)
+
+Start the local MongoDB service using Docker Compose:
 
 ```bash
 docker compose up -d
 ```
 
-Verify it is running on port `27017`:
+Verify that MongoDB is running:
 
 ```bash
 docker compose ps
@@ -173,110 +195,83 @@ docker compose ps
 
 ---
 
-### 3. Backend Setup
+### 4. Setup & Run the Backend Server
 
-1. **Navigate to the backend directory and create a virtual environment**:
+1. **Create and activate a virtual environment**:
 
    ```bash
-   cd backend
-   python3 -m venv .venv
-   source .venv/bin/activate
+   python3 -m venv backend/.venv
+   source backend/.venv/bin/activate
    ```
 
-2. **Install dependencies**:
+2. **Install Python dependencies**:
 
    ```bash
    pip install --upgrade pip
-   pip install -r requirements.txt
+   pip install -r backend/requirements.txt
    ```
 
-3. **Configure Environment Variables**:
+3. **Start the FastAPI Server**:
 
-   Copy the example environment configuration:
+   You can start the server with desired runtime flags:
 
    ```bash
-   cp ../.env.example .env
+   # Run with all live debugging outputs enabled (audio playback, transcripts, fraud scores):
+   python backend/server.py --all
+
+   # Or specify granular flags:
+   python backend/server.py --transcript --fraud --playback
    ```
 
----
+   **Available CLI Flags**:
 
-### 4. Run the Backend Server
+   | Flag | Description |
+   | :--- | :--- |
+   | `--all` / `-a` | Enables all outputs: real-time speaker playback, transcript logs, and fraud logs |
+   | `--playback` | Plays incoming remote caller audio in real-time through host speakers |
+   | `--transcript` | Logs single-line real-time Hinglish transcripts with latency timings |
+   | `--fraud` | Logs IndicBERT scam classification predictions and confidence scores |
+   | `--host <ip>` | Server bind host (default: `0.0.0.0`) |
+   | `--port <port>` | Server port (default: `8000`) |
 
-Start the backend using **Uvicorn** or directly via **Python**. Use the built-in CLI flags to enable the features you need:
-
-#### Option A: Run Everything (Playback + Transcript + Fraud Logs)
-
-```bash
-# Using uvicorn:
-backend/.venv/bin/uvicorn backend.server:app --host 0.0.0.0 --port 8000 --all
-
-# Or directly with Python:
-backend/.venv/bin/python backend/server.py --all
-```
-
-#### Option B: Granular Flags
-
-| Flag | Description |
-| :--- | :--- |
-| `--all` / `-a` | Enables all outputs: real-time speaker playback, transcript logs, and fraud logs |
-| `--playback` | Plays incoming remote caller audio in real-time through host speakers |
-| `--transcript` | Logs single-line real-time Hinglish transcripts with latency timings |
-| `--fraud` | Logs IndicBERT scam classification predictions and confidence scores |
-| `--host <ip>` | Server bind host (default: `0.0.0.0`) |
-| `--port <port>`| Server port (default: `8000`) |
-
-Example:
-
-```bash
-backend/.venv/bin/python backend/server.py --playback --transcript --fraud
-```
-
-Expected startup console banner:
-
-```text
-========================================================================
-  SatarkAI Call Intelligence Server [Device: cuda]
-  Playback   : ENABLED (--playback)
-  Transcript : ENABLED (--transcript)
-  Fraud Logs : ENABLED (--fraud)
-========================================================================
-```
+   **Interactive Documentation**:
+   - Swagger UI: `http://127.0.0.1:8000/docs`
+   - ReDoc: `http://127.0.0.1:8000/redoc`
+   - Health Check: `http://127.0.0.1:8000/health`
 
 ---
 
-### 5. Build & Run the Web Dashboard (Optional)
+### 5. Run the Cyber Forensics Dashboard
 
-The React investigation dashboard allows viewing active calls, transcript forensics, and fraud analysis:
+The frontend dashboard can be run locally or accessed via `https://satarkai.me`.
 
-```bash
-cd monitoring_dashboard
-npm install
-npm run build
-```
+1. **Install dependencies and run in development mode**:
 
-Once built, the dashboard is automatically served by the FastAPI backend at:
-`http://localhost:8000/`
+   ```bash
+   cd monitoring_dashboard
+   npm install
+   npm run dev
+   ```
 
-For standalone frontend development:
+2. **Or build for production**:
 
-```bash
-npm run dev
-```
+   ```bash
+   npm run build
+   ```
+
+   When built, the production files in `monitoring_dashboard/dist` are automatically hosted directly by the FastAPI backend at `http://127.0.0.1:8000/dashboard/`.
 
 ---
 
-### 6. Build & Install Android App
+### 6. Build & Run the Android Application
 
-1. Ensure your Android device has **USB Debugging** enabled and is connected:
+1. Connect your Android device via USB with **USB Debugging** enabled:
 
    ```bash
    adb devices
    ```
 
-2. Configure your server IP:
-   Open the app, go to **Settings** (or edit `ServerConfigManager.kt`), and point the server URL to your machine's local IP (e.g., `http://192.168.1.100:8000`).
-
-3. **Build and install the Debug APK**:
+2. Build and install the debug APK:
 
    ```bash
    cd android_app
@@ -284,11 +279,34 @@ npm run dev
    adb install -r app/build/outputs/apk/debug/app-debug.apk
    ```
 
+3. Launch the app on your phone:
+   - On the **SIP Line** tab, register a SIP account (e.g., via `sip.linphone.org` or your PBX).
+   - Enter your backend URL (e.g., `http://<YOUR_LOCAL_IP>:8000` or `https://api.satarkai.me`) and tap **Save**.
+   - Use the **Keypad** or **Contacts** tab to initiate a monitored call.
+
+---
+
+### 7. Run Across Public Networks (Cloudflare Tunnel)
+
+To connect an Android phone over 4G/5G mobile data to your local backend without port forwarding:
+
+```bash
+./backend/start_tunnel.sh
+```
+
+Or run your named Cloudflare tunnel:
+
+```bash
+cloudflared tunnel run satarkai-backend
+```
+
+Point your Android app and dashboard to `https://api.satarkai.me`.
+
 ---
 
 ## Live Output Preview
 
-When a call is active and someone is speaking, the backend prints clean, single-line logs:
+When a call is active and dialogue occurs, the backend outputs formatted, single-line logs:
 
 ```text
 [TRANSCRIPT] [REMOTE] "Hello, main bank verification department se bol raha hoon." (198ms)
@@ -297,33 +315,36 @@ When a call is active and someone is speaking, the backend prints clean, single-
 [FRAUD] SCAM (99.9%) [Safe: 0.1% | Scam: 99.9%] (5ms)
 ```
 
-At the exact same time, the citizen's phone displays:
-- A high-visibility **red alert card** (`SCAM DETECTED - Threat Confidence: 99%`).
-- An explanatory cue badge (`High urgency & credential extraction cues identified`).
-- A live transcript chat bubble in the expandable transcript viewer.
+Simultaneously, the Android app screen displays:
+- A high-contrast **SCAM DETECTED** warning banner with threat percentage.
+- Real-time WhatsApp-style transcript bubbles for both caller and receiver.
+- Identified threat factors (urgency, credential solicitation, coercion).
 
 ---
 
 ## Testing & Verification
 
-You can verify the ASR and NLP pipeline directly without an active call using the built-in test suite:
+Run the automated test suite to verify ASR, NLP classification, and API routes:
 
 ```bash
-backend/.venv/bin/python backend/test_whisper_pipeline.py
-```
+# Test Whisper ASR & IndicBERT inference pipeline:
+python backend/test_whisper_pipeline.py
 
-This runs synthetic PCM audio and benchmark audio through:
-- AES-GCM frame decryption
-- Whisper Hinglish speech recognition
-- IndicBERT context-aware vishing detection
+# Test REST API endpoints:
+python -m unittest backend/test_api_endpoints.py
+
+# Test investigation & forensics endpoints:
+python -m unittest backend/test_investigation_endpoints.py
+```
 
 ---
 
 ## Security & Privacy
 
-- **No Plaintext Audio Storage**: Audio chunks are processed in-memory in rolling 100ms buffers and immediately freed after transcription.
-- **End-to-End Encryption**: Android clients derive session keys via SHA-256 and encrypt all audio frames with **AES-GCM** before sending them across the wire.
-- **Acoustic Echo Cancellation**: Phone capture uses Android's native hardware `AudioSource.VOICE_COMMUNICATION` subsystem to prevent speaker-to-mic feedback loops.
+- **Zero Plaintext Audio Persistence**: Raw audio chunks are processed in-memory in rolling 100ms buffers and immediately freed after transcription.
+- **Hardware-Backed AES-GCM**: Cryptographic keys are stored in the Android KeyStore, and frames are encrypted prior to network transmission.
+- **Statutory Transcript Privacy**: Legitimate citizen calls that are neither flagged by ML models nor reported by users are excluded from audio transcript inspection.
+- **Acoustic Echo Cancellation**: Utilizes hardware `AudioSource.VOICE_COMMUNICATION` to prevent speaker-to-mic feedback loops.
 
 ---
 
